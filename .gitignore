@@ -1,0 +1,9 @@
+/erajs/
+/save/
+/engine/
+/.vs/
+/node_modules/
+*.bat
+*.pyc
+*.log
+*.js
