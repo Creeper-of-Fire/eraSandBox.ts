@@ -69,6 +69,8 @@ class modifier_admin{
         const val = a_add(key) * a_mlt(key)
         return val
     }
+
+    add_modifier
     
     
 

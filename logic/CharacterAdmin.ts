@@ -51,7 +51,7 @@ class character_admin {
 
     constructor() {
         this.charalist = []
-        const null_chara = new character(0)
+        const null_chara = new character()
         this.charalist.push(null_chara)
         //添加空角色
         this.master = this.charalist[0]
@@ -66,6 +66,7 @@ class character_admin {
 class character {
     id: number
     类型: string//角色的类型，比如“玩家”
+    器官模板: string
     num_data: { [key: string]: number }
     str_data: { [key: string]: string }
 
@@ -102,11 +103,12 @@ class character {
         this.id = id
         this.str_data['名字'] = name
         this.类型 = 类型
+        this.器官模板 = 器官模板
 
         this.modifiers = new pa_m.modifier_admin()
         this.modifiers.set_default(类型)
         this.organs = new pa_o.organ_admin()
-        this.organs.set_default(器官模板, 类型)
+        this.organs.set_default(this)
         this.items = new pa_i.item_admin()
         this.items.set_default(类型)
     }

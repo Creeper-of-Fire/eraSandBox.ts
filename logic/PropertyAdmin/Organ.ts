@@ -1,31 +1,74 @@
 import pa_m = require('./Modifier')
 import fp = require('../FileParser')
+import aa_i = require('../ActAdmin/Insert')
+import ca = require('../CharacterAdmin')
 
 export {
-    organ_admin, organ, organ_pos,
+    organ_admin, organ
 }
 
 class organ_admin {
     //器官模板: string//角色的器官模板，比如human
     all_organs: { [key: string]: organ }
+    master: ca.character
 
     constructor() {
         //this.器官模板 = 'human'
     }
 
-    set_default(器官模板: string, 类型: string): void {
+    set_default(master: ca.character): void {
+        this.master = master
         //this.器官模板 = 器官模板
-        const organ_struct = fp.load_yaml(fp.OrganDefaultIndex.器官结构定义(器官模板))
+        const struct_data = fp.load_yaml(fp.OrganDefaultIndex.器官结构定义(master.器官模板))
         //种族默认器官结构
-        const data = fp.load_yaml(fp.OrganDefaultIndex.器官数据定义(类型))
+        const data = fp.load_yaml(fp.OrganDefaultIndex.器官数据定义(master.类型))
         const organ_data = data['器官']
-        const insert_data = fp.load_yaml(fp.OrganDefaultIndex.插入结构定义(器官模板))
+        const insert_data = fp.load_yaml(fp.OrganDefaultIndex.插入结构定义(master.器官模板))
         this.all_organs['全身'] = new organ()
-        this.all_organs['全身'].set_default('全身', this, organ_struct, organ_data, insert_data)
+        this.all_organs['全身'].set_default('全身', this, struct_data, organ_data)
+        this._insert_default(insert_data)
     }
 
-    push_organ(key:string, val:organ):void{
+    push_organ(key: string, val: organ): void {
         this.all_organs[key] = val
+    }
+    _insert_default(insert_data): void {
+        function load_map(data: Record<string, unknown>, organs: Record<string, organ>): void {
+            for (const k in organs) {
+                organs[k].object_insert.points = []
+            }
+            for (const k in data) {
+                const posInfo = k.split(',')
+                const pos: aa_i.object_insert_point[] = []
+                const rd = Number(data[k])
+                posInfo.forEach(s => {
+                    const m = /^(.*)_(\d+(?:\.\d+)?)$/.exec(s) //魔法代码
+                    if (!m) {
+                        return
+                    }
+                    if (m[1] in organs) {
+                        const o = organs[m[1]]
+                        const p = new aa_i.object_insert_point
+                        p.set_default(o, Number(m[2]), rd)
+                        pos.push(p)
+                        o.object_insert.points.push(p)
+                    }
+                })
+                pos.forEach(p1 => {
+                    pos.forEach(p2 => {
+                        if (p1 == p2) {
+                            return
+                        }
+                        p1.toward.push(p2)
+                    })
+                })
+            }
+        }
+        for (const i in this.all_organs) {
+            this.all_organs[i].object_insert = new aa_i.object_insert
+            this.all_organs[i].object_insert.set_default(this.master, this.all_organs[i])
+        }
+        load_map(insert_data, this.all_organs)
     }
 }
 
@@ -39,14 +82,12 @@ class organ {
 
     o_admin: organ_admin
     //本质上，一个角色的所有的organ都是存储在一个一层的dict里面的，以方便外部直接调用彼此
-    points: organ_pos[]
-    //每个organ有一些节点，这些节点会连接向其他的器官
     modifiers: pa_m.modifier_admin
     //每个organ会有属于自己的修正
     low_list: organ[]
     //每个organ有它下属organ的指针
-    space: space
-    occupy: space
+    object_insert: aa_i.object_insert
+    //一个镜像器官，掌管插入类
 
     constructor() {
         this.name = ''
@@ -64,18 +105,15 @@ class organ {
         }
         //初始化相关的数据，即使在战斗中它们也会起作用
         //display_data，直接显示给玩家的数据
-        this.space = new space()
-        this.occupy = new space()
-        //space同时用于两种情况：插入和被插入
-        //两个space是隐藏数据，并不会直接显示
+
+        
     }
 
-    set_default(name: string, o_admin: organ_admin, organ_struct: any, organ_data: { [key: string]: any }, insert_data): void {
+    set_default(name: string, o_admin: organ_admin, struct_data: { [key: string]: any }, organ_data: { [key: string]: any }): void {
         this.name = name //读取来自外部的名字
         this.o_admin = o_admin//传递自己所在的dict
-        this._struct_default(organ_struct, organ_data, insert_data) //进行器官结构的默认配置
+        this._struct_default(struct_data[name], organ_data) //进行器官结构的默认配置
         this._data_default(organ_data) //进行器官数据的默认配置
-        this._insert_default(insert_data)
     }
     //为上级结构增加的属性会流到如果存在该属性的下级结构中，如果下级结构没有属性则添加给本身
     //如果该结构设置了属性，但是下级结构具有此属性，则当作没有该属性
@@ -89,17 +127,14 @@ class organ {
         }
 
     }
-    _struct_default(organ_struct: any, organ_data: { [key: string]: any }, insert_data: any): void {
+    _struct_default(struct_data: any, organ_data: { [key: string]: any }): void {
         //结构树的默认值
-        for (const key in organ_struct) {
+        for (const key in struct_data) {
             const og = new organ()//创建下属organ
-            og.set_default(key, this.o_admin, organ_struct, organ_data, insert_data)
+            og.set_default(key, this.o_admin, struct_data, organ_data)
             this.o_admin.push_organ(key, og)
             //向admin添加
         }
-    }
-    _insert_default(i_dict): void {//还没有做，但是这玩意是所有人共用模板的，最多因为扩张度有修正
-
     }
 
     //数字处理部分，num_data相关
@@ -152,32 +187,23 @@ class organ {
     }
 
 
-    add_point(position: number, total_aperture: number): organ {
-        const op = new organ_pos
-        op.set_default(this, position, total_aperture)
-        this.points.push(op)
-        return this
+    add_point(position: number, total_aperture: number):void {
+        this.object_insert.add_point(position, total_aperture)
     }
     /*
-    at(n: number): organ_pos {
+    at(n: number): object_insert_point {
         return this.points[n]
     }
     */
-    volume(): number {
-        //容积，塞入东西时会检测容积
-        //通过身高体重来获取一个数据
-        //基础值，通过“器官注册”文件获取
-        return 1
-    }
     destruction(): number {//破坏度，最大100，会查找自己的下级器官，得到破坏度上限
         let part = 0
         let val = 0
         this.sum_num('破坏 ')
-        if (this.low_list.length == 0){
+        if (this.low_list.length == 0) {
             part = 1
         }
         else {
-            for (const i of this.low_list){
+            for (const i of this.low_list) {
                 part = part + 1
                 val = val + i.destruction()
             }
@@ -186,43 +212,4 @@ class organ {
         return dt
     }
 
-}
-
-class space {
-    surface: number = 0
-    volume: number = 0
-    length: number = 0
-    aperture: number = 0
-    //表面系统：一根针占用的表面是1，surface，和道具有关
-    //容积系统：一毫升占用的容积是1，volume，和液体等有关
-    //长度系统：一厘米，length
-}
-
-class organ_pos {
-    organ: organ //所在器官
-    position: number //所在位置
-    toward: organ_pos[] //和它连接的点
-    total_aperture: number
-    used_aperture: number //使用了的半径
-
-    set_default(organ:organ, position:number, total_aperture:number){
-        
-    }
-
-    get dilate():number{ //扩张度
-        let val = this.organ.num_data['扩张']
-        for (const i of this.toward)
-            val = val + i.organ.num_data['扩张']
-        val = val / (this.toward.length + 1)
-        return val
-    }
-
-    constructor() {
-        this.used_aperture = 0
-        this.toward = []
-    }
-    link(p: organ_pos): void {
-        this.toward.push(p)
-        p.toward.push(this)
-    }
 }
