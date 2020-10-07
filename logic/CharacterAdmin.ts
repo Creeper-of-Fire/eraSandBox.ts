@@ -3,6 +3,10 @@ import pa_i = require('./PropertyAdmin/Item')
 import pa_o = require('./PropertyAdmin/Organ')
 import fp = require('./FileParser')
 
+export{
+    character,character_admin,
+}
+
 class character_admin {
     charalist: character[]
     master: character
@@ -11,8 +15,8 @@ class character_admin {
     player: character
     choose: character
 
-    num(): int {//注意，去掉了一个空角色
-        const num = len(this.charalist) - 1
+    num(): number {//注意，去掉了一个空角色
+        const num = this.charalist.length - 1
         return num
     }
 
@@ -107,21 +111,3 @@ class character {
         this.items.set_default(类型)
     }
 }
-
-
-class chara_temp{
-    function get(this, key){
-        if key in this.t_data.keys(){
-            return this.t_data[key]
-        elif key in this.p_data.keys(){
-            return this.p_data[key]
-        else{
-            return 0
-    function alt(this, key, val){
-        this.t_data[key] = val
-    function __init__(this, p_chara){
-        p_chara.update_feature()
-        this.id = p_chara.id
-        this.t_data = {}
-        this.p_data = p_chara.p_data
-        this.feature = p_chara.feature

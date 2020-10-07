@@ -1,5 +1,5 @@
 export {
-    item_admin,item,
+    item_admin,
 }
 
 
@@ -18,6 +18,8 @@ export {
 
 class item_admin {
     constructor(){
+    }
+    set_default(){
     }
 }
 class item {

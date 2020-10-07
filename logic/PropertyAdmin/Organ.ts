@@ -2,21 +2,8 @@ import pa_m = require('./Modifier')
 import fp = require('../FileParser')
 
 export {
-    organ, organ_default_index, organ_admin
+    organ_admin, organ, organ_pos,
 }
-
-namespace organ_default_index {
-    export function 器官结构定义(器官模板: string): string {
-        return '' + 器官模板 + '.yml'
-    }
-    export function 插入结构定义(器官模板: string): string {
-        return '' + 器官模板 + '.yml'
-    }
-    export function 器官数据定义(类型: string): string {
-        return '' + 类型 + '.yml'
-    }
-}
-//一些配置信息
 
 class organ_admin {
     //器官模板: string//角色的器官模板，比如human
@@ -28,11 +15,11 @@ class organ_admin {
 
     set_default(器官模板: string, 类型: string): void {
         //this.器官模板 = 器官模板
-        const organ_struct = fp.load_yaml(organ_default_index.器官结构定义(器官模板))
+        const organ_struct = fp.load_yaml(fp.OrganDefaultIndex.器官结构定义(器官模板))
         //种族默认器官结构
-        const data = fp.load_yaml(organ_default_index.器官数据定义(类型))
+        const data = fp.load_yaml(fp.OrganDefaultIndex.器官数据定义(类型))
         const organ_data = data['器官']
-        const insert_data = fp.load_yaml(organ_default_index.插入结构定义(器官模板))
+        const insert_data = fp.load_yaml(fp.OrganDefaultIndex.插入结构定义(器官模板))
         this.all_organs['全身'] = new organ()
         this.all_organs['全身'].set_default('全身', this, organ_struct, organ_data, insert_data)
     }
@@ -42,14 +29,9 @@ class organ_admin {
     }
 }
 
-
-
-
-
 //一个角色的organ参与组成以下几种数据结构：
 //解剖学树——有序树，是最主要的树，用处：创建成员，进行数据关联，显示给玩家
 //通道网——一个图，用处：构成让人插入的结构
-
 class organ {
     name: string
     num_data: { [key: string]: number }
@@ -57,8 +39,8 @@ class organ {
 
     o_admin: organ_admin
     //本质上，一个角色的所有的organ都是存储在一个一层的dict里面的，以方便外部直接调用彼此
-    holes: hole[]
-    //为了效率，每个organ有它上面的洞
+    points: organ_pos[]
+    //每个organ有一些节点，这些节点会连接向其他的器官
     modifiers: pa_m.modifier_admin
     //每个organ会有属于自己的修正
     low_list: organ[]
@@ -100,8 +82,10 @@ class organ {
     _data_default(organ_data): void {
         const data = organ_data[this.name]
         for (const key in this.num_data) {
-            this.num_data[key] = data[key]
-
+            this.num_data[key] = Number(fp.load_process(data[key]))
+        }
+        for (const key in this.str_data) {
+            this.str_data[key] = String(fp.load_process(data[key]))
         }
 
     }
@@ -112,9 +96,6 @@ class organ {
             og.set_default(key, this.o_admin, organ_struct, organ_data, insert_data)
             this.o_admin.push_organ(key, og)
             //向admin添加
-            og.organ_default(value)
-            continue
-            this.p_data[key] = format_data(value)
         }
     }
     _insert_default(i_dict): void {//还没有做，但是这玩意是所有人共用模板的，最多因为扩张度有修正
@@ -171,6 +152,17 @@ class organ {
     }
 
 
+    add_point(position: number, total_aperture: number): organ {
+        const op = new organ_pos
+        op.set_default(this, position, total_aperture)
+        this.points.push(op)
+        return this
+    }
+    /*
+    at(n: number): organ_pos {
+        return this.points[n]
+    }
+    */
     volume(): number {
         //容积，塞入东西时会检测容积
         //通过身高体重来获取一个数据
@@ -178,94 +170,59 @@ class organ {
         return 1
     }
     destruction(): number {//破坏度，最大100，会查找自己的下级器官，得到破坏度上限
-        part = 0
-        if len(this.low_list) == 0{
+        let part = 0
+        let val = 0
+        this.sum_num('破坏 ')
+        if (this.low_list.length == 0){
             part = 1
         }
         else {
-            for i in this.low_list{
-                part = part + i.destruction()
+            for (const i of this.low_list){
+                part = part + 1
+                val = val + i.destruction()
             }
         }
-        const dt = this.p_data['破坏'] / part
+        const dt = this.num_data['破坏'] / part
         return dt
     }
 
 }
 
-
 class space {
     surface: number = 0
     volume: number = 0
     length: number = 0
+    aperture: number = 0
     //表面系统：一根针占用的表面是1，surface，和道具有关
     //容积系统：一毫升占用的容积是1，volume，和液体等有关
     //长度系统：一厘米，length
 }
 
-class hole {
-    side: {
-        key: organ
-        place: number
-    }[]
-    //如{'肠道'{ 100, '肛门'{ 0}
-    aperture: number
-}
+class organ_pos {
+    organ: organ //所在器官
+    position: number //所在位置
+    toward: organ_pos[] //和它连接的点
+    total_aperture: number
+    used_aperture: number //使用了的半径
 
-function list_default_sexual_struct(species) {
-    fm = f.open_file('角色配置', species)
-    s_list = fm[species]['调教']
-    return s_list
+    set_default(organ:organ, position:number, total_aperture:number){
+        
+    }
 
-/*
-class fluid(struct){
-    function __init__(this, species){
-        struct.__init__(this, species)
+    get dilate():number{ //扩张度
+        let val = this.organ.num_data['扩张']
+        for (const i of this.toward)
+            val = val + i.organ.num_data['扩张']
+        val = val / (this.toward.length + 1)
+        return val
+    }
+
+    constructor() {
+        this.used_aperture = 0
+        this.toward = []
+    }
+    link(p: organ_pos): void {
+        this.toward.push(p)
+        p.toward.push(this)
     }
 }
-*/
-
-
-/*
-function format_data(data){//通过这个，存储的数据可以有简单的小代码
-    function is_number(target_str){
-        try{
-            target_str
-            return 1
-        }
-        if target_str.isdigit(){
-            return 1
-        return 0
-    if type(data) == list{
-        data = random.choice(data)
-    if type(data) == str{
-        data_list = data.split('/-')
-        if is_number(data_list[0]){
-            if '.' in data_list[0]{
-                data_min = float(data_list[0])
-                data_max = float(data_list[-1])
-                data = random.uniform(data_min, data_max)
-            else{
-                data_min = int(float(data_list[0]))
-                data_max = int(float(data_list[-1]))
-                data = random.randint(data_min, data_max)
-    return data
-*/
-/*
-function sdefault() {
-    fm = f.open_file('角色配置', this.species)
-    try {
-        key_list = fm[this.species][this.name]
-        for key in key_list{
-            if key in ('饰品', '特质'){
-                continue
-            }
-            value = format_data(key_list[key])
-            if value == ''{
-                continue
-            }
-            this.p_data[key] = value
-        }
-    }
-}
-*/
