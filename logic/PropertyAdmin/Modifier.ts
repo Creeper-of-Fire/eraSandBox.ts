@@ -1,124 +1,120 @@
-import fp = require('../FileParser')
+import fp = require("../FileParser");
 
+export { modifier_admin };
 
-export {
-    modifier_admin,
-}
-
-
-
-class modifier_admin{
-    private modifiers:{ [key: string]: modifier }
-    constructor(){}
-    set_default(类型){
-        const data:{[key:string]:any} = fp.load_yaml(fp.ModifierDefaultIndex.角色配置(类型))['修正']
-        for (const i in data){
-            for (const j in data[i]){
-                const a = fp.load_process(data[i][j])
-                if (a != 0){
-                    this.modifiers[j] = JSON.parse(i)
-                    this.modifiers[j].set_deafult()
+class modifier_admin {
+    private modifiers: { [key: string]: modifier };
+    constructor() {}
+    set_default(类型): void {
+        const data: Record<string, Record<string, string>> = fp.load_yaml(
+            fp.ModifierDefaultIndex.角色配置(类型)
+        )["修正"];
+        for (const i in data) {
+            for (const j in data[i]) {
+                const a = fp.load_process(data[i][j]);
+                if (a != 0) {
+                    this.modifiers[j] = JSON.parse(i);
+                    this.modifiers[j].set_default();
                 }
             }
         }
     }
-    
-    add_get(key:string, val:number):number{
+
+    add_get(key: string, val: number): number {
         function g_add(key: string): number {
-            let add = 0
+            let add = 0;
             for (const i in this.modifiers) {
                 if (key in this.modifiers[i].get_add) {
-                    add = add + this.modifiers[i].get_add[key]
+                    add = add + this.modifiers[i].get_add[key];
                 }
             }
-            return add
+            return add;
         }
         function g_mlt(key: string): number {
-            let mlt = 1
+            let mlt = 1;
             for (const i in this.modifiers) {
                 if (key in this.modifiers[i].get_mlt) {
-                    mlt = mlt * this.modifiers[i].get_mlt[key]
+                    mlt = mlt * this.modifiers[i].get_mlt[key];
                 }
             }
-            return mlt
+            return mlt;
         }
         //add_get是在get时提供修正，不影响原值
-        const a = (val + g_add(key)) * g_mlt(key)
-        return a
+        const a = (val + g_add(key)) * g_mlt(key);
+        return a;
     }
-    add_alt(key: string,val:number): number {
+    add_alt(key: string, val: number): number {
         function a_add(key: string): number {
-            let add = 0
+            let add = 0;
             for (const i in this.modifiers) {
                 if (key in this.modifiers[i].alt_add) {
-                    add = add + this.modifiers[i].alt_add[key]
+                    add = add + this.modifiers[i].alt_add[key];
                 }
             }
-            return add
+            return add;
         }
         function a_mlt(key: string): number {
-            let mlt = 1
+            let mlt = 1;
             for (const i in this.modifiers) {
                 if (key in this.modifiers[i].alt_mlt) {
-                    mlt = mlt * this.modifiers[i].alt_mlt[key]
+                    mlt = mlt * this.modifiers[i].alt_mlt[key];
                 }
             }
-            return mlt
+            return mlt;
         }
         //add_alt是在add时提供修正，会影响“加上去的值”
-        const a = (val+ a_add(key)) * a_mlt(key)
-        return a
+        const a = (val + a_add(key)) * a_mlt(key);
+        return a;
     }
-    names():string[]{
-        const a:string[] = []
-        for(const i in this.modifiers){
-            a.push(i)
+    names(): string[] {
+        const a: string[] = [];
+        for (const i in this.modifiers) {
+            a.push(i);
         }
-        return a
+        return a;
     }
-    clone(){
-        const a = new modifier_admin()
-        for (const i in this.modifiers){
-            a.modifiers[i] = JSON.parse(JSON.stringify(this.modifiers[i]))
+    clone(): modifier_admin {
+        const a = new modifier_admin();
+        for (const i in this.modifiers) {
+            a.modifiers[i] = JSON.parse(JSON.stringify(this.modifiers[i]));
         }
+        return a;
     }
-    
-    
-
 }
 
 class modifier {
-    name:string
-    get_add:{[key:string]:number}
-    get_mlt:{[key:string]:number}
-    alt_add:{[key:string]:number}
-    alt_mlt:{[key:string]:number}
+    name: string;
+    get_add: { [key: string]: number };
+    get_mlt: { [key: string]: number };
+    alt_add: { [key: string]: number };
+    alt_mlt: { [key: string]: number };
 
-    constructor(){}
-    set_deafult():void{
-        const data = fp.load_yaml(fp.ModifierDefaultIndex.配置文件)
-        this.get_add = data[this.name]['g_add']
-        this.get_mlt = data[this.name]['g_mlt']
-        this.alt_add = data[this.name]['a_add']
-        this.alt_mlt = data[this.name]['a_mlt']
+    constructor() {}
+    set_default(): void {
+        const data = fp.load_yaml(fp.ModifierDefaultIndex.配置文件);
+        this.get_add = data[this.name]["g_add"];
+        this.get_mlt = data[this.name]["g_mlt"];
+        this.alt_add = data[this.name]["a_add"];
+        this.alt_mlt = data[this.name]["a_mlt"];
     }
 
-    work():void{
-    }
+    work(): void {}
 }
 class attach extends modifier {
-    constructor(){super()}
-    contaminate():void{ }//液体沾染
+    constructor() {
+        super();
+    }
+    contaminate(): void {} //液体沾染
 }
 
-
 class destruction extends modifier {
-    constructor(){super()}
+    constructor() {
+        super();
+    }
 }
 
 class insert extends modifier {
-
-    constructor(){
-        super()
+    constructor() {
+        super();
     }
 }
