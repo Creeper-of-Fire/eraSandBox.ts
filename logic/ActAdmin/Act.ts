@@ -2,7 +2,7 @@ import { character } from '../CharacterAdmin'
 import fp = require('../FileParser')
 
 export {
-    act, act_insert
+    act, 
 }
 
 //目前为止，“旁观者”不参与一个动作，后续会进行添加
@@ -107,27 +107,25 @@ class act_changeover extends act{
     constructor(){super()}
 }
 
-class act_touch(act){
-    function able(){
+class act_touch extends act{
+    able(){
         return 1
     }
 
-    function __init__(this, chara_list, organ_list){
-        act.__init__(this, chara_list, organ_list)
-        this.feature.update(['愉快',])
+    set_default(chara_list, organ_list){
+        this.feature.push('愉快')
         this.name = '抚摸'
         this.discuss = 'test1'
     }
 }
 
-class act_hit(act){
-    function able(){
+class act_hit extends act{
+    able(){
         return 1
     }
 
-    function __init__(this, chara_list, organ_list){
-        act.__init__(this, chara_list, organ_list)
-        this.feature.update(['喜悦','痛苦'])
+    set_default(chara_list, organ_list){
+        this.feature.push('喜悦','痛苦')
         this.name = '接吻'
         this.discuss = 'test2'
     }

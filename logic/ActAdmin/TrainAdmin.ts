@@ -19,7 +19,7 @@ export{
 
 class train_admin {
 
-
+/*
     load_act() {
         this.train_list = []
         for (t_act in g.train_default_list()) {
@@ -45,4 +45,5 @@ class train_admin {
         this.s_list = stander_list
 
     }
+*/
 }

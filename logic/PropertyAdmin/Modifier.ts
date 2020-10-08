@@ -8,7 +8,7 @@ export {
 
 
 class modifier_admin{
-    modifiers:{ [key: string]: modifier }
+    private modifiers:{ [key: string]: modifier }
     constructor(){}
     set_default(类型){
         const data:{[key:string]:any} = fp.load_yaml(fp.ModifierDefaultIndex.角色配置(类型))['修正']
@@ -23,7 +23,7 @@ class modifier_admin{
         }
     }
     
-    add_get(key:string):number{
+    add_get(key:string, val:number):number{
         function g_add(key: string): number {
             let add = 0
             for (const i in this.modifiers) {
@@ -43,10 +43,10 @@ class modifier_admin{
             return mlt
         }
         //add_get是在get时提供修正，不影响原值
-        const val = g_add(key) * g_mlt(key)
-        return val
+        const a = (val + g_add(key)) * g_mlt(key)
+        return a
     }
-    add_alt(key: string): number {
+    add_alt(key: string,val:number): number {
         function a_add(key: string): number {
             let add = 0
             for (const i in this.modifiers) {
@@ -66,11 +66,22 @@ class modifier_admin{
             return mlt
         }
         //add_alt是在add时提供修正，会影响“加上去的值”
-        const val = a_add(key) * a_mlt(key)
-        return val
+        const a = (val+ a_add(key)) * a_mlt(key)
+        return a
     }
-
-    add_modifier
+    names():string[]{
+        const a:string[] = []
+        for(const i in this.modifiers){
+            a.push(i)
+        }
+        return a
+    }
+    clone(){
+        const a = new modifier_admin()
+        for (const i in this.modifiers){
+            a.modifiers[i] = JSON.parse(JSON.stringify(this.modifiers[i]))
+        }
+    }
     
     
 

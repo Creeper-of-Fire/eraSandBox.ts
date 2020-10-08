@@ -19,7 +19,7 @@ export {
 class item_admin {
     constructor(){
     }
-    set_default(){
+    set_default(类型){
     }
 }
 class item {

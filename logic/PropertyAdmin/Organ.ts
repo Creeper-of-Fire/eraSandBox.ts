@@ -9,7 +9,7 @@ export {
 
 class organ_admin {
     //器官模板: string//角色的器官模板，比如human
-    all_organs: { [key: string]: organ }
+    private all_organs: { [key: string]: organ }
     master: ca.character
 
     constructor() {
@@ -18,12 +18,12 @@ class organ_admin {
 
     set_default(master: ca.character): void {
         this.master = master
-        //this.器官模板 = 器官模板
-        const struct_data = fp.load_yaml(fp.OrganDefaultIndex.器官结构定义(master.器官模板))
-        //种族默认器官结构
         const data = fp.load_yaml(fp.OrganDefaultIndex.器官数据定义(master.类型))
+        const 器官模板 = String(data['器官模板'])
+        const struct_data = fp.load_yaml(fp.OrganDefaultIndex.器官结构定义(器官模板))
+        //种族默认器官结构
         const organ_data = data['器官']
-        const insert_data = fp.load_yaml(fp.OrganDefaultIndex.插入结构定义(master.器官模板))
+        const insert_data = fp.load_yaml(fp.OrganDefaultIndex.插入结构定义(器官模板))
         this.all_organs['全身'] = new organ()
         this.all_organs['全身'].set_default('全身', this, struct_data, organ_data)
         this._insert_default(insert_data)
@@ -32,7 +32,19 @@ class organ_admin {
     push_organ(key: string, val: organ): void {
         this.all_organs[key] = val
     }
-    _insert_default(insert_data): void {
+    get_organ(key):organ{
+        if (key in this.all_organs){
+            return this.all_organs[key]
+        }
+        else{
+            return this.null_organ()
+        }
+    }
+    null_organ(){
+        const a = new organ()
+        return a
+    }
+    private _insert_default(insert_data): void {
         function load_map(data: Record<string, unknown>, organs: Record<string, organ>): void {
             for (const k in organs) {
                 organs[k].object_insert.points = []
@@ -77,14 +89,14 @@ class organ_admin {
 //通道网——一个图，用处：构成让人插入的结构
 class organ {
     name: string
-    num_data: { [key: string]: number }
-    str_data: { [key: string]: string }
+    private num_data: { [key: string]: number }
+    private str_data: { [key: string]: string }
 
-    o_admin: organ_admin
+    private o_admin: organ_admin
     //本质上，一个角色的所有的organ都是存储在一个一层的dict里面的，以方便外部直接调用彼此
     modifiers: pa_m.modifier_admin
     //每个organ会有属于自己的修正
-    low_list: organ[]
+    private low_list: organ[]
     //每个organ有它下属organ的指针
     object_insert: aa_i.object_insert
     //一个镜像器官，掌管插入类
@@ -117,7 +129,7 @@ class organ {
     }
     //为上级结构增加的属性会流到如果存在该属性的下级结构中，如果下级结构没有属性则添加给本身
     //如果该结构设置了属性，但是下级结构具有此属性，则当作没有该属性
-    _data_default(organ_data): void {
+    private _data_default(organ_data): void {
         const data = organ_data[this.name]
         for (const key in this.num_data) {
             this.num_data[key] = Number(fp.load_process(data[key]))
@@ -127,7 +139,7 @@ class organ {
         }
 
     }
-    _struct_default(struct_data: any, organ_data: { [key: string]: any }): void {
+    private _struct_default(struct_data: any, organ_data: { [key: string]: any }): void {
         //结构树的默认值
         for (const key in struct_data) {
             const og = new organ()//创建下属organ
@@ -137,68 +149,111 @@ class organ {
         }
     }
 
+    //希望少用
+    get(key: string) {
+        if (key in this.num_data) {
+            return this.get_num(key)
+        }
+        else if (key in this.str_data) {
+            return this.get_str(key)
+        }
+        else {
+            return null
+        }
+    }
+    alt(key: string, val: any){
+        if (key in this.num_data) {
+            this.alt_num(key,val)
+        }
+        else if (key in this.str_data) {
+            this.alt_str(key,val)
+        }
+        else {
+            null
+        }
+    }
+    
+    //字符串处理
+    get_str(key: string):string {
+        if (key in this.str_data) {
+            return this.str_data[key]
+        }
+        else{
+            return ''
+        }
+    }
+    alt_str(key: string, val:string){
+        this.str_data[key] = val
+    }
+
     //数字处理部分，num_data相关
     sum_all() {
         for (const i in this.num_data) {
-            this.sum_num(i)
+            this._sum_num(i)
         }
     }
-    sum_num(key: string): void {//汇总
+    private _sum_num(key: string): void {//汇总
         for (const i_low of this.low_list) {
-            i_low.sum_num(key)
+            i_low._sum_num(key)
         }
         for (const i_low of this.low_list) {
             this.num_data[key] = this.num_data[key] + i_low.get_num(key)
         }
     }
     get_num(key: string): number {
-        this.sum_num(key)//可能导致性能过度消耗
+        this._sum_num(key)
         if (key in this.num_data) {
-            const g = this.modifiers.add_get(key)
-            return this.num_data[key] + g
+            const g = this.modifiers.add_get(key,this.num_data[key])
+            return g
+        }
+        else{
+            return 0
         }
     }
     alt_num(key: string, val: number): void {
-        this.sum_num(key)
+        this._sum_num(key)
         const add_val = val - this.num_data[key]
-        this.add_num(key, add_val)
+        this._add_num(key, add_val)
     }
-    add_num(key: string, val: number): void {
-        this.sum_num(key)
-        if (typeof (val) == 'number') {
-            const a = this.modifiers.add_alt(key)
-            val = val + a//获得加成
-            let part = 0
-            for (const i_part of this.low_list) {//获得下级个数
-                if (key in i_part.num_data) {
-                    part = part + 1
-                }
+    private _add_num(key: string, val: number): void {
+        this._sum_num(key)
+        const a = this.modifiers.add_alt(key,val) //获得加成
+        let part = 0
+        for (const i_part of this.low_list) { //获得下级个数
+            if (key in i_part.num_data) {
+                part = part + 1
             }
-            if (part == 0) {
-                this.num_data[key] = this.num_data[key] + val
-            }
-            else {
-                for (const i_part of this.low_list) {
-                    const add_val = val / part//未经过加权，直接分配
-                    i_part.add_num(key, add_val)
-                }
+        }
+        if (part == 0) {
+            this.num_data[key] = this.num_data[key] + a
+        }
+        else {
+            for (const i_part of this.low_list) {
+                const add_val = a / part //未经过加权，直接分配
+                i_part._add_num(key, add_val)
             }
         }
     }
 
+/*
+    modifiers_names() {
+        return this.modifiers.names()
+    }
+    quote_modifiers(){
+        return this.modifiers
+    }
+    clone_modifiers(){
+        return this.modifiers.clone()
+    }
+*/
 
     add_point(position: number, total_aperture: number):void {
         this.object_insert.add_point(position, total_aperture)
     }
-    /*
-    at(n: number): object_insert_point {
-        return this.points[n]
-    }
-    */
-    destruction(): number {//破坏度，最大100，会查找自己的下级器官，得到破坏度上限
+    destruction(): number { //破坏度，最大100，会查找自己的下级器官，得到破坏度上限
         let part = 0
         let val = 0
-        this.sum_num('破坏 ')
+        this._sum_num('破坏 ')
         if (this.low_list.length == 0) {
             part = 1
         }
@@ -211,5 +266,4 @@ class organ {
         const dt = this.num_data['破坏'] / part
         return dt
     }
-
 }

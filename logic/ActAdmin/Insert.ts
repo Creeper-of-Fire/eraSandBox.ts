@@ -21,7 +21,7 @@ class act_insert extends aa_a.act {
         if ('抖M' in this.p_c.modifiers) {
             return 1
         }
-        else if (this.info.start_point.dilate * this.info.start_point.total_aperture <= this.insertion.occupy.aperture) {
+        else if (this.info.start_point.dilate() * this.info.start_point.total_aperture <= this.insertion.occupy.aperture) {
             return 1
         }
         else {
@@ -62,11 +62,12 @@ class insert extends aa_ag.act_group {
         //插入的深度的精神需求
         return 100//测试，设置为1米
     }
-    list_organ(): any {
-        let enter_pos = this.entrance.points[1]//举个例子
-        const outside = this.entrance.master.organs.all_organs['外界'].object_insert
-        find_path(enter_pos, outside, this.insertion, this.insertion.occupy.length)
-
+    list_organ(enter_pos): act_insert[] {
+        //let enter_pos = this.entrance.points[1]//举个例子
+        const outside = this.entrance.master.organs.get_organ('外界').object_insert
+        const a_g_able = find_path(enter_pos, outside, this.insertion, this.insertion.occupy.length)
+        a_g_able.sort(function(a,b){return b.will - a.will})
+        return a_g_able[0].path
     }
     set_default(passive_character: ca.character, active_character: ca.character, entrance: object_insert, insertion: object_insert): void {
         //主动方，被动方，入口，插入物
@@ -96,6 +97,16 @@ function find_path(entry: object_insert_point, outside: object_insert,
 
 
     function dfs(pos: object_insert_point, rest_length: number, pre: object_insert_point): void {
+        if (pos.total_aperture<=0){
+            return
+        } //没开孔，返回
+        if (pos.object_at.total_space.aperture<=0){
+            return
+        } //没开孔，返回
+        if (pos.object_at.total_space.volume <=0){
+            return
+        } //没开孔，返回
+
         const info = new insert_info()
         info.start_point = pre
         //info.end_point = pos
@@ -118,6 +129,7 @@ function find_path(entry: object_insert_point, outside: object_insert,
         if (a_will < 0) {
             return
         } //不想戳进去，返回
+
         pos.used_aperture = pos.used_aperture + insertion.occupy.aperture
         pos.object_at.used_space.volume = pos.object_at.used_space.volume + insertion.occupy.volume
         pos.object_at.used_space.aperture = pos.object_at.used_space.aperture + insertion.occupy.aperture
@@ -149,12 +161,15 @@ function find_path(entry: object_insert_point, outside: object_insert,
             }
             //所有节点都走不到了，而且由于上一次是“点对点”，这次并不能跳转到下一个点
             const extra = rest_length / pos.object_at.total_space.length * 100
-            let c = 0
             //虽然预计走不到了，但是还是有剩下的长度的百分比
             if ((pos.position + extra <= 100) || (pos.position - extra >= 0)){
                 const b = new insert_info()
                 b.start_point = pos
                 b.percentage_through = extra
+                b.object_through = pos.object_at
+                const c = new act_insert()
+                c.set_default(b,insertion)
+                path.path.push(c)
                 add_path()
             } //看看上下能不能走到头
         }
@@ -213,7 +228,7 @@ class object_insert {
     occupy: space
     //space同时用于两种情况：插入和被插入
 
-    get dilate(): number {
+    dilate(): number {
         const val = this.prototype.get_num('扩张')
         return val
     }
@@ -258,10 +273,10 @@ class object_insert_point {
         this.position = position
         this.total_aperture = total_aperture
     }
-    get dilate(): number { //扩张度
-        let val = this.object_at.dilate
+    dilate(): number { //扩张度
+        let val = this.object_at.dilate()
         for (const i of this.toward)
-            val = val + i.object_at.dilate
+            val = val + i.object_at.dilate()
         val = val / (this.toward.length + 1)
         return val
     }

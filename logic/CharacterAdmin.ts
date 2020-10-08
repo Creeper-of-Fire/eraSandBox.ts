@@ -1,7 +1,6 @@
 import pa_m = require('./PropertyAdmin/Modifier')
 import pa_i = require('./PropertyAdmin/Item')
 import pa_o = require('./PropertyAdmin/Organ')
-import fp = require('./FileParser')
 
 export{
     character,character_admin,
@@ -22,15 +21,16 @@ class character_admin {
 
     add_chara(temp_chara): void {
         this.charalist.push(temp_chara)
-        this.__re_list()
+        this._re_list()
     }
-    del_chara(id): void {
-        this.charalist.pop(id)
-        this.__re_list()
+    del_chara(id:number): void {
+        this.charalist.splice(id,1)
+        this._re_list()
     }
-    get_chara(): void {
+    get_chara(): string[] {
+        return
     }
-    __re_list(): void {
+    private _re_list(): void {
         for (let i = 0; i <= this.num(); i++) {
             this.charalist[i].id = i
         }
@@ -47,6 +47,13 @@ class character_admin {
                 this.player = this.charalist[1]
             }
         }
+    }
+    names(start:number,end:number = this.charalist.length):string[]{
+        const a:string[] = []
+        for(let i=start;i<= end;i++){
+            a.push(this.charalist[i].get_str('名字'))
+        }
+        return a
     }
 
     constructor() {
@@ -66,7 +73,7 @@ class character_admin {
 class character {
     id: number
     类型: string//角色的类型，比如“玩家”
-    器官模板: string
+    //器官模板: string
     num_data: { [key: string]: number }
     str_data: { [key: string]: string }
 
@@ -99,11 +106,11 @@ class character {
         this.id = 0
     }
 
-    set_default(id: number, name: string, 类型: string = 'NULL', 器官模板: string = 'human'): void {
+    set_default(id: number, name: string, 类型: string): void {
         this.id = id
         this.str_data['名字'] = name
         this.类型 = 类型
-        this.器官模板 = 器官模板
+        //this.器官模板 = 器官模板
 
         this.modifiers = new pa_m.modifier_admin()
         this.modifiers.set_default(类型)
@@ -111,5 +118,61 @@ class character {
         this.organs.set_default(this)
         this.items = new pa_i.item_admin()
         this.items.set_default(类型)
+    }
+
+    //希望少用
+    get(key: string) {
+        if (key in this.num_data) {
+            return this.get_num(key)
+        }
+        else if (key in this.str_data) {
+            return this.get_str(key)
+        }
+        else {
+            return null
+        }
+    }
+    alt(key: string, val: any){
+        if (key in this.num_data) {
+            this.alt_num(key,val)
+        }
+        else if (key in this.str_data) {
+            this.alt_str(key,val)
+        }
+        else {
+            null
+        }
+    }
+    
+    //字符串处理
+    get_str(key: string):string {
+        if (key in this.str_data) {
+            return this.str_data[key]
+        }
+        else{
+            return ''
+        }
+    }
+    alt_str(key: string, val:string){
+        this.str_data[key] = val
+    }
+
+    //数字处理部分，num_data相关
+    get_num(key: string): number {
+        if (key in this.num_data) {
+            const g = this.modifiers.add_get(key,this.num_data[key])
+            return g
+        }
+        else{
+            return 0
+        }
+    }
+    alt_num(key: string, val: number): void {
+        const add_val = val - this.num_data[key]
+        this._add_num(key, add_val)
+    }
+    private _add_num(key: string, val: number): void {
+        const a = this.modifiers.add_alt(key,val)
+        this.num_data[key] = this.num_data[key] + a
     }
 }
