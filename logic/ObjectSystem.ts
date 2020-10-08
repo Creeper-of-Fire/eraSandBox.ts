@@ -20,7 +20,7 @@ export = {
             }
             case "[object Array]": {
                 const result = [];
-                const arr = data as unknown[];
+                const arr = data as Array<unknown>;
                 arr.forEach((o) => {
                     result.push(this._load(o));
                 });
@@ -55,7 +55,7 @@ export = {
             }
             case "[object Array]": {
                 const result = [];
-                const arr = data as unknown[];
+                const arr = data as Array<unknown>;
                 arr.forEach((o) => {
                     result.push(this._save(o));
                 });

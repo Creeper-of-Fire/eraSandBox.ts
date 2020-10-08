@@ -16,8 +16,7 @@ class act_insert extends aa_a.act {
         if ("抖M" in this.p_c.modifiers) {
             return 1;
         } else if (
-            this.info.start_point.dilate() *
-            this.info.start_point.total_aperture <=
+            this.info.start_point.dilate() * this.info.start_point.total_aperture <=
             this.insertion.occupy.aperture
         ) {
             return 1;
@@ -28,7 +27,7 @@ class act_insert extends aa_a.act {
     able(): number {
         return 1;
     }
-    set_feature(): void { }
+    set_feature(): void {}
 
     dilate(): number {
         //扩张管理
@@ -58,10 +57,9 @@ class insert extends aa_ag.act_group {
         //插入的深度的精神需求
         return 100; //测试，设置为1米
     }
-    list_organ(enter_pos): act_insert[] {
+    list_organ(enter_pos): Array<act_insert> {
         //let enter_pos = this.entrance.points[1]//举个例子
-        const outside = this.entrance.master.organs.get_organ("外界")
-            .object_insert;
+        const outside = this.entrance.master.organs.get_organ("外界").object_insert;
         const a_g_able = find_path(
             enter_pos,
             outside,
@@ -92,8 +90,8 @@ function find_path(
     outside: object_insert,
     insertion: object_insert,
     insert_length: number
-): insert_path[] {
-    const paths: insert_path[] = [];
+): Array<insert_path> {
+    const paths: Array<insert_path> = [];
     const path: insert_path = new insert_path();
     path.path = [];
 
@@ -106,11 +104,7 @@ function find_path(
         paths.push(p);
     } //拷贝，不然只会push一个引用
 
-    function dfs(
-        pos: object_insert_point,
-        rest_length: number,
-        pre: object_insert_point
-    ): void {
+    function dfs(pos: object_insert_point, rest_length: number, pre: object_insert_point): void {
         if (pos.total_aperture <= 0) {
             return;
         } //没开孔，返回
@@ -178,8 +172,7 @@ function find_path(
                 }
             }
             //所有节点都走不到了，而且由于上一次是“点对点”，这次并不能跳转到下一个点
-            const extra =
-                (rest_length / pos.object_at.total_space.length) * 100;
+            const extra = (rest_length / pos.object_at.total_space.length) * 100;
             //虽然预计走不到了，但是还是有剩下的长度的百分比
             if (pos.position + extra <= 100 || pos.position - extra >= 0) {
                 const b = new insert_info();
@@ -216,7 +209,7 @@ function find_path(
 }
 
 class insert_path {
-    path: act_insert[];
+    path: Array<act_insert>;
     will: number;
     //last_organ: object_insert
     //last_position: number[] //上一个点的位置行进方向 at most 2 (front and back)
@@ -232,7 +225,7 @@ class insert_info {
 
 class object_insert {
     name: string;
-    points: object_insert_point[];
+    points: Array<object_insert_point>;
     //一些节点，这些节点会连接向其他的器官
     modifiers: pa_m.modifier_admin;
     //属于自己的修正，和prototype共通
@@ -249,7 +242,7 @@ class object_insert {
         const val = this.prototype.get_num("扩张");
         return val;
     }
-    add_modifiers(): void { }
+    add_modifiers(): void {}
     add_point(position: number, total_aperture: number): void {
         const op = new object_insert_point();
         op.set_default(this, position, total_aperture);
@@ -273,7 +266,7 @@ class object_insert {
 class object_insert_point {
     object_at: object_insert; //所在器官
     position: number; //所在位置
-    toward: object_insert_point[]; //和它连接的点
+    toward: Array<object_insert_point>; //和它连接的点
     total_aperture: number;
     used_aperture: number;
     modifiers: pa_m.modifier_admin;

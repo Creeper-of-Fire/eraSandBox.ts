@@ -1,11 +1,12 @@
 import pa_m = require("./PropertyAdmin/Modifier");
 import pa_i = require("./PropertyAdmin/Item");
 import pa_o = require("./PropertyAdmin/Organ");
+import fp = require("./FileParser");
 
 export { character, character_admin };
 
 class character_admin {
-    charalist: character[];
+    charalist: Array<character>;
     master: character;
     assist: character;
     target: character;
@@ -28,7 +29,7 @@ class character_admin {
         this.charalist.splice(id, 1);
         this._re_list();
     }
-    get_chara(): string[] {
+    get_chara(): Array<string> {
         return;
     }
     private _re_list(): void {
@@ -49,8 +50,8 @@ class character_admin {
             }
         }
     }
-    names(start: number, end: number = this.charalist.length - 1): string[] {
-        const a: string[] = [];
+    names(start: number, end: number = this.charalist.length - 1): Array<string> {
+        const a: Array<string> = [];
         for (let i = start; i <= end; i++) {
             a.push(this.charalist[i].get_str("名字"));
         }
@@ -98,6 +99,7 @@ class character {
             臀围: 0,
             //以后这些数据会变成用函数获取的，方便锯掉腿之类的
         };
+
         this.str_data = {
             名字: "",
             种族: "",
@@ -112,13 +114,38 @@ class character {
         this.str_data["名字"] = name;
         this.类型 = 类型;
         //this.器官模板 = 器官模板
+        const data = fp.load_yaml(fp.CharacterDefaultIndex.角色数据定义(类型));
+        this._data_default(data["基础"] as Record<string, number | string>);
 
         this.modifiers = new pa_m.modifier_admin();
-        this.modifiers.set_default(类型);
+        if ("修正" in data) {
+            this.modifiers.set_default(
+                data["修正"] as Record<string, Record<string, string | number>>
+            );
+        }
         this.organs = new pa_o.organ_admin();
         this.organs.set_default(this);
         this.items = new pa_i.item_admin();
         this.items.set_default(类型);
+    }
+    private _data_default(data: Record<string, string | number>): void {
+        if (data == null) {
+            return;
+        }
+        for (const key in this.num_data) {
+            if (key in data) {
+                this.num_data[key] = fp.load_process(data[key] as string | number) as number;
+            } else {
+                this.num_data[key] = 0;
+            }
+        }
+        for (const key in this.str_data) {
+            if (key in data) {
+                this.str_data[key] = fp.load_process(data[key] as string | number) as string;
+            } else {
+                this.str_data[key] = "";
+            }
+        }
     }
 
     //希望少用
@@ -137,7 +164,7 @@ class character {
         } else if (key in this.str_data) {
             this.alt_str(key, String(val));
         } else {
-            null;
+            return;
         }
     }
 

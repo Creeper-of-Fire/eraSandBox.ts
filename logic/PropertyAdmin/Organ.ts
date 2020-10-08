@@ -17,18 +17,12 @@ class organ_admin {
 
     set_default(master: ca.character): void {
         this.master = master;
-        const data = fp.load_yaml(
-            fp.OrganDefaultIndex.器官数据定义(master.类型)
-        );
+        const data = fp.load_yaml(fp.OrganDefaultIndex.器官数据定义(master.类型));
         const 器官模板 = String(data["器官模板"]);
-        const struct_data = fp.load_yaml(
-            fp.OrganDefaultIndex.器官结构定义(器官模板)
-        );
+        const struct_data = fp.load_yaml(fp.OrganDefaultIndex.器官结构定义(器官模板));
         //种族默认器官结构
         const organ_data = data["器官"];
-        const insert_data = fp.load_yaml(
-            fp.OrganDefaultIndex.插入结构定义(器官模板)
-        );
+        const insert_data = fp.load_yaml(fp.OrganDefaultIndex.插入结构定义(器官模板));
         this.all_organs["全身"] = new organ();
         this.all_organs["全身"].set_default(
             "全身",
@@ -36,12 +30,7 @@ class organ_admin {
             struct_data,
             organ_data as Record<
                 string,
-                | string
-                | number
-                | Record<
-                      string,
-                      Record<string, Record<string, string | number>>
-                  >
+                Record<string, string | number | Record<string, Record<string, string | number>>>
             >
         );
         this._insert_default(insert_data);
@@ -62,16 +51,13 @@ class organ_admin {
         return a;
     }
     private _insert_default(insert_data): void {
-        function load_map(
-            data: Record<string, unknown>,
-            organs: Record<string, organ>
-        ): void {
+        function load_map(data: Record<string, unknown>, organs: Record<string, organ>): void {
             for (const k in organs) {
                 organs[k].object_insert.points = [];
             }
             for (const k in data) {
                 const posInfo = k.split(",");
-                const pos: aa_i.object_insert_point[] = [];
+                const pos: Array<aa_i.object_insert_point> = [];
                 const rd = Number(data[k]);
                 posInfo.forEach((s) => {
                     const m = /^(.*)_(\d+(?:\.\d+)?)$/.exec(s); //魔法代码
@@ -98,10 +84,7 @@ class organ_admin {
         }
         for (const i in this.all_organs) {
             this.all_organs[i].object_insert = new aa_i.object_insert();
-            this.all_organs[i].object_insert.set_default(
-                this.master,
-                this.all_organs[i]
-            );
+            this.all_organs[i].object_insert.set_default(this.master, this.all_organs[i]);
         }
         load_map(insert_data, this.all_organs);
     }
@@ -119,7 +102,7 @@ class organ {
     //本质上，一个角色的所有的organ都是存储在一个一层的dict里面的，以方便外部直接调用彼此
     modifiers: pa_m.modifier_admin;
     //每个organ会有属于自己的修正
-    private low_list: organ[];
+    private low_list: Array<organ>;
     //每个organ有它下属organ的指针
     object_insert: aa_i.object_insert;
     //一个镜像器官，掌管插入类
@@ -140,6 +123,7 @@ class organ {
         };
         //初始化相关的数据，即使在战斗中它们也会起作用
         //display_data，直接显示给玩家的数据
+        this.modifiers = new pa_m.modifier_admin()
     }
 
     set_default(
@@ -148,9 +132,7 @@ class organ {
         struct_data: Record<string, any>,
         organ_data: Record<
             string,
-            | string
-            | number
-            | Record<string, Record<string, Record<string, string | number>>>
+            Record<string, string | number | Record<string, Record<string, string | number>>>
         >
     ): void {
         this.name = name; //读取来自外部的名字
@@ -160,7 +142,12 @@ class organ {
     }
     //为上级结构增加的属性会流到如果存在该属性的下级结构中，如果下级结构没有属性则添加给本身
     //如果该结构设置了属性，但是下级结构具有此属性，则当作没有该属性
-    private _data_default(organ_data): void {
+    private _data_default(
+        organ_data: Record<
+            string,
+            Record<string, string | number | Record<string, Record<string, string | number>>>
+        >
+    ): void {
         if (organ_data == null) {
             return;
         }
@@ -169,10 +156,15 @@ class organ {
         }
         const data = organ_data[this.name];
         for (const key in this.num_data) {
-            this.num_data[key] = Number(fp.load_process(data[key]));
+            this.num_data[key] = fp.load_process(data[key] as string | number) as number;
         }
         for (const key in this.str_data) {
-            this.str_data[key] = String(fp.load_process(data[key]));
+            this.str_data[key] = fp.load_process(data[key] as string | number) as string;
+        }
+        if ("修正" in data) {
+            this.modifiers.set_default(
+                data["修正"] as Record<string, Record<string, string | number>>
+            );
         }
     }
     private _struct_default(struct_data, organ_data): void {

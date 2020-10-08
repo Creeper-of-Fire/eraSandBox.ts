@@ -7,10 +7,7 @@ class modifier_admin {
     constructor() {
         this.modifiers = {};
     }
-    set_default(类型): void {
-        const data: Record<string, Record<string, string>> = fp.load_yaml(
-            fp.ModifierDefaultIndex.角色配置(类型)
-        )["修正"] as Record<string, Record<string, string>>;
+    set_default(data: Record<string, Record<string, string | number>>): void {
         for (const i in data) {
             for (const j in data[i]) {
                 const a = fp.load_process(data[i][j]);
@@ -69,25 +66,25 @@ class modifier_admin {
         const a = (val + a_add(key)) * a_mlt(key);
         return a;
     }
-    names(): string[] {
-        const a: string[] = [];
+    names(): Array<string> {
+        const a: Array<string> = [];
         for (const i in this.modifiers) {
             a.push(i);
         }
         return a;
     }
-    type(val: string) {
-        switch (val) {
-            case "modifier":
-                return modifier;
-            case "attach":
-                return attach;
-            case "destruction":
-                return destruction;
-            case "insert":
-                return insert;
-            default:
-                return modifier;
+    type(val: string): typeof modifier {
+        const a = {
+            modifier: modifier,
+            attach: attach,
+            destruction: destruction,
+            insert: insert,
+        };
+        if (val in a) {
+            return a[val];
+        } else {
+            console.log("modifier_type_error when auto_set");
+            return modifier;
         }
     }
     /*

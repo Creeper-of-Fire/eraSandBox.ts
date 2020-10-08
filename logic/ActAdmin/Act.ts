@@ -9,7 +9,7 @@ class act {
     discuss: string;
     p_c: character;
     a_c: character;
-    feature: string[];
+    feature: Array<string>;
 
     constructor() {}
 
@@ -23,7 +23,7 @@ class act {
         return 0;
     }
 
-    spek(): string[] {
+    spek(): Array<string> {
         function speak_translate(this, string) {
             //处理口上中类似于{balabala}的数据
             //功能暂时不做

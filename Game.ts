@@ -140,10 +140,10 @@ function ui_make_chara(ctype = "玩家") {
     function set_temp(keyvalue) {
         temp.alt(keyname, keyvalue);
     }
-    function make_input(k_str:string) {
+    function make_input(k_str: string) {
         keyname = k_str;
         era.t(String(k_str) + ":  ");
-        era.input(set_temp);
+        era.input(set_temp,String(temp.get(keyname)));
         era.t();
     }
     function go_next() {
@@ -168,7 +168,7 @@ function ui_main() {
     function target_choose(target_choose: string) {
         c.target = c.charalist[Number(target_choose[1])];
         pages.goto(ui_main);
-        console.log(c.target)
+        console.log(c.target);
     }
     function main_save_game() {
         era.page();
@@ -205,16 +205,23 @@ function ui_main() {
         era.b("确定", go_next);
         era.b("返回", pages.back);
     }
-    function target_info(id) {
-        const info =
-            "[" + String(id) + "]" + String(c.charalist[id].get("名字"));
+    function target_info(id):string {
+        const info = "[" + String(id) + "]" + String(c.charalist[id].get("名字"));
         return info;
+    }
+    function charalist_infos():Array<string> {
+        const infos:Array<string> = []
+        for (const i of c.charalist){
+            infos.push(target_info(i.id))
+        }
+        return infos;
     }
 
     const c = datas.characters; //一个常驻的对象，类的全称是character_admin
     era.page();
     const num = c.num();
     c.error_fix();
+    console.log(c.target)
     era.t("主人" + c.master.get("名字"));
     era.t();
     era.t("助手" + c.assist.get("名字"));
@@ -222,7 +229,7 @@ function ui_main() {
     era.t("目标" + c.target.get("名字"));
     era.t();
     era.t("查看角色：");
-    era.dropdown(c.names(1), target_choose, target_info(c.target.id));
+    era.dropdown(charalist_infos(), target_choose, target_info(c.target.id));
     era.t();
     /*
     era.b('召唤角色', pages.goto(main_make_chara))

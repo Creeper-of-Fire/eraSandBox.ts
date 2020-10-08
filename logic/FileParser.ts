@@ -11,13 +11,14 @@ export {
     load_process,
     OrganDefaultIndex,
     ModifierDefaultIndex,
+    CharacterDefaultIndex,
 };
 //一些配置信息
 function load_file(path: string, encoding = "utf8"): string {
     const buf = fs.readFileSync(path);
     return iconv.decode(buf, encoding);
 }
-function load_csv(path: string, encoding = "utf8"): string[][] {
+function load_csv(path: string, encoding = "utf8"): Array<Array<string>> {
     const text = this.load_file(path, encoding);
     const data = [];
     text.split(/\r?\n/).forEach((row) => {
@@ -46,20 +47,17 @@ function load_auto(path: string, encoding = "utf8"): unknown {
             return this.load_file(path, encoding);
     }
 }
-function load_process(data): unknown {
-    if (typeof data != "string") {
-        return data;
+function load_process(data: string | number): string | number {
+    data = String(data);
+    const list = data.split("/,");
+    const r = getRandomInt(0, list.length - 1);
+    const range = list[r].split("/_");
+    const a = Number(range[0]);
+    const b = Number(range[range.length - 1]);
+    if (!isNaN(a) && !isNaN(b)) {
+        return getRandomInt(a, b);
     } else {
-        const list = data.split("/,");
-        const r = getRandomInt(0, list.length - 1);
-        const range = list[r].split("/_");
-        const a = Number(range[0]);
-        const b = Number(range[range.length - 1]);
-        if (!isNaN(a) && !isNaN(b)) {
-            return getRandomInt(a, b);
-        } else {
-            range[0];
-        }
+        return range[0];
     }
 }
 //请输入以游戏主程序为根目录的目录
@@ -78,7 +76,15 @@ namespace OrganDefaultIndex {
 
 namespace ModifierDefaultIndex {
     export const 配置文件 = "./data/配置表/modifier.yml";
+    /*
     export function 角色配置(类型) {
+        return "./data/配置表/角色初始/" + 类型 + ".yml";
+    }
+    */
+}
+
+namespace CharacterDefaultIndex {
+    export function 角色数据定义(类型: string): string {
         return "./data/配置表/角色初始/" + 类型 + ".yml";
     }
 }

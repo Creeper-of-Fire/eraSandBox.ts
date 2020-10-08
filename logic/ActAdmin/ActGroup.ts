@@ -13,7 +13,7 @@ function train_default_list(){
 class act_group {
     name: string;
     discuss: string;
-    act_list: aa_a.act[];
+    act_list: Array<aa_a.act>;
     active_character: ca.character;
     passive_character: ca.character;
 
