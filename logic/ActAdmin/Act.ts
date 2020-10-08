@@ -11,7 +11,7 @@ class act {
     a_c: character;
     feature: string[];
 
-    constructor() { }
+    constructor() {}
 
     will(): number {
         //通过条件判断来判断是否可行，当大于0则可行
@@ -30,7 +30,10 @@ class act {
             return string;
         }
         let list_for_rand: Array<Array<string>> = [];
-        const s_data: Record<string, any> = fp.load_yaml("口上配置");
+        const s_data = fp.load_yaml("口上配置") as Record<
+            string,
+            Array<Record<string, Record<string, Array<string>> | string>>
+        >;
         const active = this.a_c;
         const passive = this.p_c;
         const a_feature = active.modifiers.names;
@@ -42,7 +45,7 @@ class act {
             }
             for (const dict1 of s_data[i_feature]) {
                 //s_data[i_feature]是个列表，dict是个字典
-                const able = dict1["ABLE"];
+                const able = dict1["ABLE"] as Record<string,Array<string>>;
                 let is_true = 1;
                 if ("A" in able) {
                     for (const a_key in able["A"]) {
@@ -71,7 +74,7 @@ class act {
                 }
             }
         }
-        let speak_list: string[] = [];
+        let speak_list: Array<string> = [];
         if (list_for_rand.length != 0) {
             speak_list =
                 list_for_rand[Math.round(Math.random() * list_for_rand.length)];
@@ -83,7 +86,7 @@ class act {
         return speak_list;
     }
 
-    work(): void { }
+    work(): void {}
 }
 
 class act_changeover extends act {

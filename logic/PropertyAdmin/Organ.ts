@@ -7,7 +7,7 @@ export { organ_admin, organ };
 
 class organ_admin {
     //器官模板: string//角色的器官模板，比如human
-    private all_organs: { [key: string]: organ };
+    private all_organs: Record<string, organ>;
     master: ca.character;
 
     constructor() {
@@ -34,7 +34,15 @@ class organ_admin {
             "全身",
             this,
             struct_data,
-            organ_data
+            organ_data as Record<
+                string,
+                | string
+                | number
+                | Record<
+                      string,
+                      Record<string, Record<string, string | number>>
+                  >
+            >
         );
         this._insert_default(insert_data);
     }
@@ -104,8 +112,8 @@ class organ_admin {
 //通道网——一个图，用处：构成让人插入的结构
 class organ {
     name: string;
-    private num_data: { [key: string]: number };
-    private str_data: { [key: string]: string };
+    private num_data: Record<string, number>;
+    private str_data: Record<string, string>;
 
     private o_admin: organ_admin;
     //本质上，一个角色的所有的organ都是存储在一个一层的dict里面的，以方便外部直接调用彼此
@@ -137,8 +145,13 @@ class organ {
     set_default(
         name: string,
         o_admin: organ_admin,
-        struct_data: { [key: string]: any },
-        organ_data: { [key: string]: any }
+        struct_data: Record<string, any>,
+        organ_data: Record<
+            string,
+            | string
+            | number
+            | Record<string, Record<string, Record<string, string | number>>>
+        >
     ): void {
         this.name = name; //读取来自外部的名字
         this.o_admin = o_admin; //传递自己所在的dict
@@ -162,10 +175,7 @@ class organ {
             this.str_data[key] = String(fp.load_process(data[key]));
         }
     }
-    private _struct_default(
-        struct_data: any,
-        organ_data: { [key: string]: any }
-    ): void {
+    private _struct_default(struct_data, organ_data): void {
         //结构树的默认值
         for (const key in struct_data) {
             const og = new organ(); //创建下属organ
@@ -185,11 +195,11 @@ class organ {
             return null;
         }
     }
-    alt(key: string, val: any) {
+    alt(key: string, val: string | number) {
         if (key in this.num_data) {
-            this.alt_num(key, val);
+            this.alt_num(key, val as number);
         } else if (key in this.str_data) {
-            this.alt_str(key, val);
+            this.alt_str(key, val as string);
         } else {
             null;
         }

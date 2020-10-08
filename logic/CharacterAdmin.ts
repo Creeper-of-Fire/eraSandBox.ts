@@ -75,8 +75,8 @@ class character {
     id: number;
     类型: string; //角色的类型，比如“玩家”
     //器官模板: string
-    num_data: { [key: string]: number };
-    str_data: { [key: string]: string };
+    num_data: Record<string, number>;
+    str_data: Record<string, string>;
 
     modifiers: pa_m.modifier_admin;
     organs: pa_o.organ_admin;

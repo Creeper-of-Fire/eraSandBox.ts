@@ -10,15 +10,18 @@ class train_admin {
     s_list: ca.character[];
     load_act() {
         this.train_list = [];
-        for (t_act in g.train_default_list()) {
-            t = t_act(this.a_list, this.p_list);
-            if (t.able()) {
-                this.train_list.push(t);
+        for (const t_act of this.train_default_list()) {
+            //const t = t_act(this.a_list, this.p_list);
+            if (t_act.able()) {
+                this.train_list.push(t_act);
             }
         }
     }
     run_act() {}
     c() {}
+    train_default_list():aa_ag.act_group[]{
+        return []
+    }
 
     o() {}
     set(active_list, passive_list, stander_list = []) {

@@ -3,17 +3,20 @@ import fp = require("../FileParser");
 export { modifier_admin };
 
 class modifier_admin {
-    private modifiers: { [key: string]: modifier };
-    constructor() {}
+    private modifiers: Record<string, modifier>;
+    constructor() {
+        this.modifiers = {};
+    }
     set_default(类型): void {
         const data: Record<string, Record<string, string>> = fp.load_yaml(
             fp.ModifierDefaultIndex.角色配置(类型)
-        )["修正"];
+        )["修正"] as Record<string, Record<string, string>>;
         for (const i in data) {
             for (const j in data[i]) {
                 const a = fp.load_process(data[i][j]);
                 if (a != 0) {
-                    this.modifiers[j] = JSON.parse(i);
+                    const b = this.type(i);
+                    this.modifiers[j] = new b();
                     this.modifiers[j].set_default();
                 }
             }
@@ -73,6 +76,21 @@ class modifier_admin {
         }
         return a;
     }
+    type(val: string) {
+        switch (val) {
+            case "modifier":
+                return modifier;
+            case "attach":
+                return attach;
+            case "destruction":
+                return destruction;
+            case "insert":
+                return insert;
+            default:
+                return modifier;
+        }
+    }
+    /*
     clone(): modifier_admin {
         const a = new modifier_admin();
         for (const i in this.modifiers) {
@@ -80,22 +98,30 @@ class modifier_admin {
         }
         return a;
     }
+    */
 }
 
 class modifier {
     name: string;
-    get_add: { [key: string]: number };
-    get_mlt: { [key: string]: number };
-    alt_add: { [key: string]: number };
-    alt_mlt: { [key: string]: number };
+    get_add: Record<string, number>;
+    get_mlt: Record<string, number>;
+    alt_add: Record<string, number>;
+    alt_mlt: Record<string, number>;
 
-    constructor() {}
+    constructor() {
+        this.get_add = {};
+        this.get_mlt = {};
+        this.alt_add = {};
+        this.alt_mlt = {};
+    }
     set_default(): void {
         const data = fp.load_yaml(fp.ModifierDefaultIndex.配置文件);
-        this.get_add = data[this.name]["g_add"];
-        this.get_mlt = data[this.name]["g_mlt"];
-        this.alt_add = data[this.name]["a_add"];
-        this.alt_mlt = data[this.name]["a_mlt"];
+        if (this.name in data) {
+            this.get_add = data[this.name]["g_add"];
+            this.get_mlt = data[this.name]["g_mlt"];
+            this.alt_add = data[this.name]["a_add"];
+            this.alt_mlt = data[this.name]["a_mlt"];
+        }
     }
 
     work(): void {}

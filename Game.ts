@@ -140,10 +140,10 @@ function ui_make_chara(ctype = "玩家") {
     function set_temp(keyvalue) {
         temp.alt(keyname, keyvalue);
     }
-    function make_input(k_str) {
+    function make_input(k_str:string) {
         keyname = k_str;
         era.t(String(k_str) + ":  ");
-        era.input(set_temp(temp.get(keyname)));
+        era.input(set_temp);
         era.t();
     }
     function go_next() {
@@ -168,6 +168,7 @@ function ui_main() {
     function target_choose(target_choose: string) {
         c.target = c.charalist[Number(target_choose[1])];
         pages.goto(ui_main);
+        console.log(c.target)
     }
     function main_save_game() {
         era.page();
