@@ -121,13 +121,48 @@ class character {
                 data["修正"] as Record<string, Record<string, string | number>>
             );
         }
-        if ("经历" in data) {
-            this.experiences.set_default(
-                data["经历"] as Record<string, string | number>
+        this.organs.set_default(this, data["器官模板"] as string);
+        if (data["器官"] != null) {
+            this.organs.data_default(
+                data["器官"] as Record<
+                    string,
+                    Record<
+                        string,
+                        Record<
+                            string,
+                            string | number | Record<string, Record<string, string | number>>
+                        >
+                    >
+                >
             );
         }
-        this.organs.set_default(this);
         this.equipments.set_default(type);
+        if ("经历" in data) {
+            this.experiences.set_default(data["经历"] as Record<string, string | number>);
+            const c = this.experiences.data_list;
+            for (const i in c) {
+                this.modifiers.set_default(
+                    c[i]["修正"] as Record<string, Record<string, string | number>>
+                );
+                this._data_default(c[i]["基础"] as Record<string, string | number>);
+                if (c[i]["器官"] != null) {
+                    this.organs.data_default(
+                        c[i]["器官"] as Record<
+                            string,
+                            Record<
+                                string,
+                                Record<
+                                    string,
+                                    | string
+                                    | number
+                                    | Record<string, Record<string, string | number>>
+                                >
+                            >
+                        >
+                    );
+                }
+            }
+        }
     }
     private _data_default(data: Record<string, string | number>): void {
         if (data == null) {
@@ -135,16 +170,14 @@ class character {
         }
         for (const key in this.num_data) {
             if (key in data) {
-                this.num_data[key] = this.num_data[key] + (fp.load_process(data[key] as string | number) as number);
-            } else {
-                this.num_data[key] = 0;
+                this.num_data[key] =
+                    this.num_data[key] +
+                    (fp.load_process(data[key] as string | number) as number);
             }
         }
         for (const key in this.str_data) {
             if (key in data) {
                 this.str_data[key] = fp.load_process(data[key] as string | number) as string;
-            } else {
-                this.str_data[key] = "";
             }
         }
     }

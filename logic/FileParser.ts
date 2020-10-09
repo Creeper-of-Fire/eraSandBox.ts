@@ -13,7 +13,8 @@ export {
     ModifierDefaultIndex,
     CharacterDefaultIndex,
     ActDefaultIndex,
-    getRandomFromArray
+    ExperienceDefaultIndex,
+    getRandomFromArray,
 };
 //一些配置信息
 function load_file(path: string, encoding = "utf8"): string {
@@ -57,7 +58,14 @@ function load_process(data: string | number): string | number {
     const a = Number(range[0]);
     const b = Number(range[range.length - 1]);
     if (!isNaN(a) && !isNaN(b)) {
-        return getRandomNumber(a, b);
+        if (range[0].indexOf(".") > -1) {
+            //此时为浮点数
+            return getRandomNumber(a, b)
+        } else {
+            //此时为整数
+            return getRandomInt(a, b)
+        }
+        ;
     } else {
         return range[0];
     }
@@ -65,32 +73,32 @@ function load_process(data: string | number): string | number {
 //请输入以游戏主程序为根目录的目录
 
 namespace OrganDefaultIndex {
-    export function 器官结构定义(器官模板: string): string {
-        return "./data/配置表/器官注册/" + 器官模板 + ".yml";
+    export function 器官结构定义(model: string): string {
+        return "./data/配置表/器官注册/" + model + ".yml";
     }
-    export function 插入结构定义(器官模板: string): string {
-        return "./data/配置表/器官注册/" + 器官模板 + ".yml";
+    export function 插入结构定义(model: string): string {
+        return "./data/配置表/器官注册/" + model + ".yml";
     }
-    export function 器官数据定义(类型: string): string {
-        return "./data/配置表/角色初始/" + 类型 + ".yml";
+    export function 器官数据定义(type: string): string {
+        return "./data/配置表/角色初始/" + type + ".yml";
     }
 }
 
 namespace ModifierDefaultIndex {
-    export const 配置文件 = "./data/配置表/modifier.yml";
+    export function 配置文件(type: string = "modifier"): string {
+        return "./data/配置表/修正/" + type + ".yml";
+    }
     /*
     export function 角色配置(类型) {
         return "./data/配置表/角色初始/" + 类型 + ".yml";
     }
     */
 }
-
 namespace CharacterDefaultIndex {
-    export function 角色数据定义(类型: string): string {
-        return "./data/配置表/角色初始/" + 类型 + ".yml";
+    export function 角色数据定义(type: string): string {
+        return "./data/配置表/角色初始/" + type + ".yml";
     }
 }
-
 namespace ActDefaultIndex {
     export function 口上配置(): string {
         return "./data/配置表/口上预设/口上配置.yml";
@@ -99,17 +107,22 @@ namespace ActDefaultIndex {
         return "./data/配置表/口上预设/描述配置.yml";
     }
 }
+namespace ExperienceDefaultIndex {
+    export function 经历(): string {
+        return "./data/配置表/经历/经历.yml";
+    }
+}
 
-function getRandomInt(min: number, max: number) {
+function getRandomInt(min: number, max: number): number {
     const Range = max - min;
     const Rand = Math.random(); //获取[0-1）的随机数
     return min + Math.round(Rand * Range); //放大取整
 }
-function getRandomNumber(min: number, max: number) {
+function getRandomNumber(min: number, max: number): number {
     const Range = max - min;
     const Rand = Math.random(); //获取[0-1）的随机数
-    return min + (Rand * Range); //放大取整
+    return min + Rand * Range; //放大取整
 }
-function getRandomFromArray(list:Array<any>) {
-    return list[getRandomInt(0,list.length - 1)]
+function getRandomFromArray(list: Array<any>) {
+    return list[getRandomInt(0, list.length - 1)];
 }

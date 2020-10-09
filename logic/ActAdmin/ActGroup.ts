@@ -38,14 +38,14 @@ class act_admin {
 
 class act_group {
     name: string;
-    discuss: string;
+    describe: string;
 
     active_character: ca.character;
     passive_character: ca.character;
     act_list: Array<aa.a.act>;
     constructor() {
         this.name = "";
-        this.discuss = "";
+        this.describe = "";
         this.active_character = new ca.character();
         this.passive_character = new ca.character();
         this.act_list = [];

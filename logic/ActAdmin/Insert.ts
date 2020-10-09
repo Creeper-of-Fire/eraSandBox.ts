@@ -46,7 +46,7 @@ class act_insert extends aa.a.act {
 
     set_default(insert_info: insert_info, insertion: object_insert): void {
         this.name = "插入";
-        this.discuss = 'test2'
+        this.describe = 'test2'
         this.insertion = insertion;
         this.start_point = insert_info.start_point;
         this.p_c = insert_info.start_point.object_at.master;
@@ -85,7 +85,7 @@ function active_will_check(p_c, a_c, info, insertion): number {
 
 class insert {
     name: string;
-    discuss: string;
+    describe: string;
     act_list: Array<act_insert>;
     active_character: ca.character;
     passive_character: ca.character;
@@ -93,7 +93,7 @@ class insert {
     insertion: object_insert;
     constructor() {
         this.name = "";
-        this.discuss = "";
+        this.describe = "";
         this.act_list = [];
     }
     list_organ(): Array<act_insert> {

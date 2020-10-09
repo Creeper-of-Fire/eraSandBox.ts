@@ -6,13 +6,13 @@ export { act, speak_translate, speak_func };
 //目前为止，“旁观者”不参与一个动作，后续会进行添加
 class act {
     name: string;
-    discuss: string;
+    describe: string;
     p_c: ca.character;
     a_c: ca.character;
     feature: Array<string>;
     constructor() {
         this.name = "";
-        this.discuss = "";
+        this.describe = "";
         this.p_c = new ca.character();
         this.a_c = new ca.character();
         this.feature = [];
@@ -77,7 +77,7 @@ class act {
         let speak_list: Array<string> = [];
         if (list_for_rand.length != 0) {
             speak_list = list_for_rand[Math.round(Math.random() * list_for_rand.length)];
-            speak_list.push(speak_translate(this.discuss));
+            speak_list.push(speak_translate(this.describe));
         }
         for (let i in speak_list) {
             i = speak_func(i);
@@ -107,7 +107,7 @@ class act_touch extends act {
     set_default(chara_list, organ_list): void {
         this.feature.push("愉快");
         this.name = "抚摸";
-        this.discuss = "test1";
+        this.describe = "test1";
     }
     constructor() {
         super();
@@ -122,7 +122,7 @@ class act_hit extends act {
     set_default(chara_list, organ_list): void {
         this.feature.push("喜悦", "痛苦");
         this.name = "接吻";
-        this.discuss = "test2";
+        this.describe = "test2";
     }
     constructor() {
         super();

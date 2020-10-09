@@ -12,12 +12,15 @@ class modifier_admin {
             for (const j in data[i]) {
                 const a = fp.load_process(data[i][j]);
                 if (a != 0) {
-                    const b = this.type(i);
-                    this.modifiers[j] = new b();
-                    this.modifiers[j].set_default();
+                    this.add_modifier(j, i);
                 }
             }
         }
+    }
+    add_modifier(name: string, type: string): void {
+        const b = this.type(type);
+        this.modifiers[name] = new b();
+        this.modifiers[name].set_default(name);
     }
 
     add_get(key: string, val: number): number {
@@ -87,6 +90,7 @@ class modifier_admin {
             return modifier;
         }
     }
+    
     /*
     clone(): modifier_admin {
         const a = new modifier_admin();
@@ -100,20 +104,25 @@ class modifier_admin {
 
 class modifier {
     name: string;
+    describe: string;
     get_add: Record<string, number>;
     get_mlt: Record<string, number>;
     alt_add: Record<string, number>;
     alt_mlt: Record<string, number>;
 
     constructor() {
+        this.name = "";
+        this.describe = "";
         this.get_add = {};
         this.get_mlt = {};
         this.alt_add = {};
         this.alt_mlt = {};
     }
-    set_default(): void {
-        const data = fp.load_yaml(fp.ModifierDefaultIndex.配置文件);
+    set_default(name): void {
+        this.name = name;
+        const data = fp.load_yaml(fp.ModifierDefaultIndex.配置文件(this.constructor.name));
         if (this.name in data) {
+            this.describe = data[this.name]["describe"];
             this.get_add = data[this.name]["g_add"];
             this.get_mlt = data[this.name]["g_mlt"];
             this.alt_add = data[this.name]["a_add"];

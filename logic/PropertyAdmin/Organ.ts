@@ -15,25 +15,29 @@ class organ_admin {
         this.all_organs = {};
     }
 
-    set_default(master: ca.character): void {
+    set_default(master: ca.character, model: string): void {
         this.master = master;
-        const data = fp.load_yaml(fp.OrganDefaultIndex.器官数据定义(master.type));
-        const model = String(data["器官模板"]);
         const struct_data = fp.load_yaml(fp.OrganDefaultIndex.器官结构定义(model));
         //种族默认器官结构
-        const organ_data = data["器官"];
         const insert_data = fp.load_yaml(fp.OrganDefaultIndex.插入结构定义(model));
         this.all_organs["全身"] = new organ();
-        this.all_organs["全身"].set_default(
-            "全身",
-            this,
-            struct_data,
-            organ_data as Record<
+        this.all_organs["全身"].set_default("全身", this, struct_data);
+        this._insert_default(insert_data);
+    }
+    data_default(
+        organ_data: Record<
+            string,
+            Record<
                 string,
                 Record<string, string | number | Record<string, Record<string, string | number>>>
             >
-        );
-        this._insert_default(insert_data);
+        >
+    ) {
+        for (const i in this.all_organs) {
+            if (i in organ_data) {
+                this.all_organs[i].data_default(organ_data[i]);
+            }
+        }
     }
 
     push_organ(key: string, val: organ): void {
@@ -88,19 +92,19 @@ class organ_admin {
         }
         load_map(insert_data, this.all_organs);
     }
-    insert_able_organ_list():Array<aa.i.object_insert>{
-        const list:Array<aa.i.object_insert> = []
-        for( const i of this.all_organs["外界"].object_insert.points){
-            list.push(i.object_at)
+    insert_able_organ_list(): Array<aa.i.object_insert> {
+        const list: Array<aa.i.object_insert> = [];
+        for (const i of this.all_organs["外界"].object_insert.points) {
+            list.push(i.object_at);
         }
-        return list
+        return list;
     }
-    insert_able_point_list():Array<aa.i.object_insert_point>{
-        const list:Array<aa.i.object_insert_point> = []
-        for( const i of this.all_organs["外界"].object_insert.points){
-            list.push(i)
+    insert_able_point_list(): Array<aa.i.object_insert_point> {
+        const list: Array<aa.i.object_insert_point> = [];
+        for (const i of this.all_organs["外界"].object_insert.points) {
+            list.push(i);
         }
-        return list
+        return list;
     }
 }
 
@@ -140,23 +144,14 @@ class organ {
         this.modifiers = new pa.m.modifier_admin();
     }
 
-    set_default(
-        name: string,
-        o_admin: organ_admin,
-        struct_data: Record<string, any>,
-        organ_data: Record<
-            string,
-            Record<string, string | number | Record<string, Record<string, string | number>>>
-        >
-    ): void {
+    set_default(name: string, o_admin: organ_admin, struct_data: Record<string, any>): void {
         this.name = name; //读取来自外部的名字
         this.o_admin = o_admin; //传递自己所在的dict
-        this._struct_default(struct_data[name], organ_data); //进行器官结构的默认配置
-        this._data_default(organ_data); //进行器官数据的默认配置
+        this._struct_default(struct_data[name]); //进行器官结构的默认配置
     }
     //为上级结构增加的属性会流到如果存在该属性的下级结构中，如果下级结构没有属性则添加给本身
     //如果该结构设置了属性，但是下级结构具有此属性，则当作没有该属性
-    private _data_default(
+    data_default(
         organ_data: Record<
             string,
             Record<string, string | number | Record<string, Record<string, string | number>>>
@@ -170,7 +165,8 @@ class organ {
         }
         const data = organ_data[this.name];
         for (const key in this.num_data) {
-            this.num_data[key] = fp.load_process(data[key] as string | number) as number;
+            this.num_data[key] =
+                this.num_data[key] + (fp.load_process(data[key] as string | number) as number);
         }
         for (const key in this.str_data) {
             this.str_data[key] = fp.load_process(data[key] as string | number) as string;
@@ -181,11 +177,11 @@ class organ {
             );
         }
     }
-    private _struct_default(struct_data, organ_data): void {
+    private _struct_default(struct_data): void {
         //结构树的默认值
         for (const key in struct_data) {
             const og = new organ(); //创建下属organ
-            og.set_default(key, this.o_admin, struct_data, organ_data);
+            og.set_default(key, this.o_admin, struct_data);
             this.o_admin.push_organ(key, og);
             //向admin添加
         }
