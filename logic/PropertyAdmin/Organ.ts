@@ -1,28 +1,28 @@
-import pa_m = require("./Modifier");
 import fp = require("../FileParser");
-import aa_i = require("../ActAdmin/Insert");
 import ca = require("../CharacterAdmin");
+import aa = require("../ActAdmin/__init__");
+import pa = require("../PropertyAdmin/__init__");
 
 export { organ_admin, organ };
 
 class organ_admin {
-    //器官模板: string//角色的器官模板，比如human
+    //model: string//角色的器官模板，比如human
     private all_organs: Record<string, organ>;
     master: ca.character;
 
     constructor() {
-        //this.器官模板 = 'human'
+        //this.model = 'human'
         this.all_organs = {};
     }
 
     set_default(master: ca.character): void {
         this.master = master;
-        const data = fp.load_yaml(fp.OrganDefaultIndex.器官数据定义(master.类型));
-        const 器官模板 = String(data["器官模板"]);
-        const struct_data = fp.load_yaml(fp.OrganDefaultIndex.器官结构定义(器官模板));
+        const data = fp.load_yaml(fp.OrganDefaultIndex.器官数据定义(master.type));
+        const model = String(data["器官模板"]);
+        const struct_data = fp.load_yaml(fp.OrganDefaultIndex.器官结构定义(model));
         //种族默认器官结构
         const organ_data = data["器官"];
-        const insert_data = fp.load_yaml(fp.OrganDefaultIndex.插入结构定义(器官模板));
+        const insert_data = fp.load_yaml(fp.OrganDefaultIndex.插入结构定义(model));
         this.all_organs["全身"] = new organ();
         this.all_organs["全身"].set_default(
             "全身",
@@ -57,7 +57,7 @@ class organ_admin {
             }
             for (const k in data) {
                 const posInfo = k.split(",");
-                const pos: Array<aa_i.object_insert_point> = [];
+                const pos: Array<aa.i.object_insert_point> = [];
                 const rd = Number(data[k]);
                 posInfo.forEach((s) => {
                     const m = /^(.*)_(\d+(?:\.\d+)?)$/.exec(s); //魔法代码
@@ -66,7 +66,7 @@ class organ_admin {
                     }
                     if (m[1] in organs) {
                         const o = organs[m[1]];
-                        const p = new aa_i.object_insert_point();
+                        const p = new aa.i.object_insert_point();
                         p.set_default(o, Number(m[2]), rd);
                         pos.push(p);
                         o.object_insert.points.push(p);
@@ -83,10 +83,24 @@ class organ_admin {
             }
         }
         for (const i in this.all_organs) {
-            this.all_organs[i].object_insert = new aa_i.object_insert();
+            this.all_organs[i].object_insert = new aa.i.object_insert();
             this.all_organs[i].object_insert.set_default(this.master, this.all_organs[i]);
         }
         load_map(insert_data, this.all_organs);
+    }
+    insert_able_organ_list():Array<aa.i.object_insert>{
+        const list:Array<aa.i.object_insert> = []
+        for( const i of this.all_organs["外界"].object_insert.points){
+            list.push(i.object_at)
+        }
+        return list
+    }
+    insert_able_point_list():Array<aa.i.object_insert_point>{
+        const list:Array<aa.i.object_insert_point> = []
+        for( const i of this.all_organs["外界"].object_insert.points){
+            list.push(i)
+        }
+        return list
     }
 }
 
@@ -100,11 +114,11 @@ class organ {
 
     private o_admin: organ_admin;
     //本质上，一个角色的所有的organ都是存储在一个一层的dict里面的，以方便外部直接调用彼此
-    modifiers: pa_m.modifier_admin;
+    modifiers: pa.m.modifier_admin;
     //每个organ会有属于自己的修正
     private low_list: Array<organ>;
     //每个organ有它下属organ的指针
-    object_insert: aa_i.object_insert;
+    object_insert: aa.i.object_insert;
     //一个镜像器官，掌管插入类
 
     constructor() {
@@ -123,7 +137,7 @@ class organ {
         };
         //初始化相关的数据，即使在战斗中它们也会起作用
         //display_data，直接显示给玩家的数据
-        this.modifiers = new pa_m.modifier_admin()
+        this.modifiers = new pa.m.modifier_admin();
     }
 
     set_default(

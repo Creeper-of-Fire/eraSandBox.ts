@@ -1,9 +1,7 @@
-import aa_ag = require("./ActGroup");
+import aa = require("../ActAdmin/__init__");
 import ca = require("../CharacterAdmin");
-import aa_i = require("./Insert");
 
-export { train_admin };
-
+export {};
 
 
 
@@ -14,15 +12,16 @@ export { train_admin };
 
 
 
-function train_default_list(): Array<aa_ag.act_group> {
-    return [new aa_i.insert(),];
+
+
+
+function train_default_list(): Array<aa.ag.act_group> {
+    return [new aa.i.insert()];
 }
-
+/*
 class train_admin {
-    train_list: Array<aa_ag.act_group>;
-    a_list: Array<ca.character>;
-    p_list: Array<ca.character>;
-    s_list: Array<ca.character>;
+    train_list: Array<aa.ag.act_group>;
+    
     load_act() {
         this.train_list = [];
         for (const t_act of train_default_list()) {
@@ -34,10 +33,8 @@ class train_admin {
     }
     run_act() {}
 
-    set_default(active_list, passive_list, stander_list = []) {
-        this.a_list = active_list;
-        this.p_list = passive_list;
-        this.s_list = stander_list;
+    set_default(control_able_character) {
+        
     }
     constructor() {
         this.train_list = [];
@@ -46,3 +43,4 @@ class train_admin {
         this.s_list = [];
     }
 }
+*/

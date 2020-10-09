@@ -1,17 +1,22 @@
-import { character } from "../CharacterAdmin";
+import ca = require("../CharacterAdmin");
 import fp = require("../FileParser");
 
-export { act };
+export { act, speak_translate, speak_func };
 
 //目前为止，“旁观者”不参与一个动作，后续会进行添加
 class act {
     name: string;
     discuss: string;
-    p_c: character;
-    a_c: character;
+    p_c: ca.character;
+    a_c: ca.character;
     feature: Array<string>;
-
-    constructor() {}
+    constructor() {
+        this.name = "";
+        this.discuss = "";
+        this.p_c = new ca.character();
+        this.a_c = new ca.character();
+        this.feature = [];
+    }
 
     will(): number {
         //通过条件判断来判断是否可行，当大于0则可行
@@ -24,13 +29,8 @@ class act {
     }
 
     spek(): Array<string> {
-        function speak_translate(this, string) {
-            //处理口上中类似于{balabala}的数据
-            //功能暂时不做
-            return string;
-        }
         let list_for_rand: Array<Array<string>> = [];
-        const s_data = fp.load_yaml("口上配置") as Record<
+        const s_data = fp.load_yaml(fp.ActDefaultIndex.口上配置()) as Record<
             string,
             Array<Record<string, Record<string, Array<string>> | string>>
         >;
@@ -45,7 +45,7 @@ class act {
             }
             for (const dict1 of s_data[i_feature]) {
                 //s_data[i_feature]是个列表，dict是个字典
-                const able = dict1["ABLE"] as Record<string,Array<string>>;
+                const able = dict1["ABLE"] as Record<string, Array<string>>;
                 let is_true = 1;
                 if ("A" in able) {
                     for (const a_key in able["A"]) {
@@ -76,12 +76,11 @@ class act {
         }
         let speak_list: Array<string> = [];
         if (list_for_rand.length != 0) {
-            speak_list =
-                list_for_rand[Math.round(Math.random() * list_for_rand.length)];
-            speak_list.push(this.discuss);
+            speak_list = list_for_rand[Math.round(Math.random() * list_for_rand.length)];
+            speak_list.push(speak_translate(this.discuss));
         }
-        for (let i of speak_list) {
-            i = speak_translate(i);
+        for (let i in speak_list) {
+            i = speak_func(i);
         }
         return speak_list;
     }
@@ -128,4 +127,24 @@ class act_hit extends act {
     constructor() {
         super();
     }
+}
+function speak_translate(speak: string): string {
+    const t_data = fp.load_yaml(fp.ActDefaultIndex.描述()) as Record<
+        string,
+        string | Array<string>
+    >;
+    if (speak in t_data) {
+        const a = t_data[speak];
+        if (typeof a == "string") {
+            return a;
+        } else {
+            return fp.getRandomFromArray(a);
+        }
+    }
+    //功能暂时不做
+    return speak;
+}
+function speak_func(speak:string): string {
+    //处理口上中类似于{balabala}的数据
+    return speak;
 }

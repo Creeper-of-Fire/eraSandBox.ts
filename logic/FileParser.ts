@@ -12,6 +12,8 @@ export {
     OrganDefaultIndex,
     ModifierDefaultIndex,
     CharacterDefaultIndex,
+    ActDefaultIndex,
+    getRandomFromArray
 };
 //一些配置信息
 function load_file(path: string, encoding = "utf8"): string {
@@ -55,7 +57,7 @@ function load_process(data: string | number): string | number {
     const a = Number(range[0]);
     const b = Number(range[range.length - 1]);
     if (!isNaN(a) && !isNaN(b)) {
-        return getRandomInt(a, b);
+        return getRandomNumber(a, b);
     } else {
         return range[0];
     }
@@ -89,8 +91,25 @@ namespace CharacterDefaultIndex {
     }
 }
 
+namespace ActDefaultIndex {
+    export function 口上配置(): string {
+        return "./data/配置表/口上预设/口上配置.yml";
+    }
+    export function 描述(): string {
+        return "./data/配置表/口上预设/描述配置.yml";
+    }
+}
+
 function getRandomInt(min: number, max: number) {
     const Range = max - min;
     const Rand = Math.random(); //获取[0-1）的随机数
     return min + Math.round(Rand * Range); //放大取整
+}
+function getRandomNumber(min: number, max: number) {
+    const Range = max - min;
+    const Rand = Math.random(); //获取[0-1）的随机数
+    return min + (Rand * Range); //放大取整
+}
+function getRandomFromArray(list:Array<any>) {
+    return list[getRandomInt(0,list.length - 1)]
 }

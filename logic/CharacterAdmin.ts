@@ -1,7 +1,6 @@
-import pa_m = require("./PropertyAdmin/Modifier");
-import pa_i = require("./PropertyAdmin/Item");
-import pa_o = require("./PropertyAdmin/Organ");
+import aa = require("./ActAdmin/__init__");
 import fp = require("./FileParser");
+import pa = require("./PropertyAdmin/__init__");
 
 export { character, character_admin };
 
@@ -12,7 +11,18 @@ class character_admin {
     target: character;
     player: character;
     choose: character;
-
+    constructor() {
+        this.charalist = [];
+        const null_chara = new character();
+        null_chara.set_default(0, "NULL");
+        this.charalist.push(null_chara);
+        //添加空角色
+        this.master = this.charalist[0];
+        this.assist = this.charalist[0];
+        this.target = this.charalist[0];
+        this.player = this.charalist[0];
+        this.choose = this.charalist[0];
+    }
     num(): number {
         //注意，去掉了一个空角色
         const num = this.charalist.length - 1;
@@ -57,33 +67,26 @@ class character_admin {
         }
         return a;
     }
-
-    constructor() {
-        this.charalist = [];
-        const null_chara = new character();
-        null_chara.set_default(0, "NULL", "NULL");
-        this.charalist.push(null_chara);
-        //添加空角色
-        this.master = this.charalist[0];
-        this.assist = this.charalist[0];
-        this.target = this.charalist[0];
-        this.player = this.charalist[0];
-        this.choose = this.charalist[0];
-    }
 }
 
 class character {
     id: number;
-    类型: string; //角色的类型，比如“玩家”
-    //器官模板: string
+    type: string; //角色的类型，比如“玩家”
+    modifiers: pa.m.modifier_admin;
+    organs: pa.o.organ_admin;
+    equipments: pa.e.equipment_admin;
+    experiences: pa.exp.experience_admin;
+    site: aa.e.site;
     num_data: Record<string, number>;
     str_data: Record<string, string>;
-
-    modifiers: pa_m.modifier_admin;
-    organs: pa_o.organ_admin;
-    items: pa_i.item_admin;
-
     constructor() {
+        this.id = 0;
+        this.type = "NULL";
+        this.modifiers = new pa.m.modifier_admin();
+        this.organs = new pa.o.organ_admin();
+        this.equipments = new pa.e.equipment_admin();
+        this.experiences = new pa.exp.experience_admin();
+        this.site = new aa.e.site();
         this.num_data = {
             最大体力: 0,
             体力: 0,
@@ -99,34 +102,32 @@ class character {
             臀围: 0,
             //以后这些数据会变成用函数获取的，方便锯掉腿之类的
         };
-
         this.str_data = {
             名字: "",
             种族: "",
         };
         //要展示的数据放在这上面
-
-        this.id = 0;
     }
 
-    set_default(id: number, name: string, 类型: string): void {
+    set_default(id: number, type: string): void {
         this.id = id;
-        this.str_data["名字"] = name;
-        this.类型 = 类型;
+        this.type = type;
         //this.器官模板 = 器官模板
-        const data = fp.load_yaml(fp.CharacterDefaultIndex.角色数据定义(类型));
+        const data = fp.load_yaml(fp.CharacterDefaultIndex.角色数据定义(type));
         this._data_default(data["基础"] as Record<string, number | string>);
 
-        this.modifiers = new pa_m.modifier_admin();
         if ("修正" in data) {
             this.modifiers.set_default(
                 data["修正"] as Record<string, Record<string, string | number>>
             );
         }
-        this.organs = new pa_o.organ_admin();
+        if ("经历" in data) {
+            this.experiences.set_default(
+                data["经历"] as Record<string, string | number>
+            );
+        }
         this.organs.set_default(this);
-        this.items = new pa_i.item_admin();
-        this.items.set_default(类型);
+        this.equipments.set_default(type);
     }
     private _data_default(data: Record<string, string | number>): void {
         if (data == null) {
@@ -134,7 +135,7 @@ class character {
         }
         for (const key in this.num_data) {
             if (key in data) {
-                this.num_data[key] = fp.load_process(data[key] as string | number) as number;
+                this.num_data[key] = this.num_data[key] + (fp.load_process(data[key] as string | number) as number);
             } else {
                 this.num_data[key] = 0;
             }

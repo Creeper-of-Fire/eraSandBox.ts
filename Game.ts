@@ -1,9 +1,12 @@
 import era = require("./engine/era");
 import ca = require("./logic/CharacterAdmin");
-import aa_ta = require("./logic/ActAdmin/TrainAdmin");
+import aa = require("./logic/ActAdmin/__init__");
 
 class page_admin {
     pages: Function[];
+    constructor() {
+        this.pages = [];
+    }
     goto(func: Function, args?) {
         this.pages.push(func);
         func(args);
@@ -14,9 +17,6 @@ class page_admin {
         this.goto(a);
     }
     exit() {
-        this.pages = [];
-    }
-    constructor() {
         this.pages = [];
     }
 }
@@ -35,7 +35,9 @@ namespace pages {
 }
 class data_admin {
     characters: ca.character_admin;
-    constructor() {}
+    constructor() {
+        this.characters = new ca.character_admin();
+    }
 }
 
 const version = "Beta 0.0.2";
@@ -143,7 +145,7 @@ function ui_make_chara(ctype = "玩家") {
     function make_input(k_str: string) {
         keyname = k_str;
         era.t(String(k_str) + ":  ");
-        era.input(set_temp,String(temp.get(keyname)));
+        era.input(set_temp, String(temp.get(keyname)));
         era.t();
     }
     function go_next() {
@@ -160,7 +162,7 @@ function ui_make_chara(ctype = "玩家") {
 
     let keyname = "";
     const temp = new ca.character();
-    temp.set_default(1, keyname, ctype);
+    temp.set_default(1,ctype);
     pages.goto(ui_make_chara_1);
 }
 
@@ -205,14 +207,14 @@ function ui_main() {
         era.b("确定", go_next);
         era.b("返回", pages.back);
     }
-    function target_info(id):string {
+    function target_info(id): string {
         const info = "[" + String(id) + "]" + String(c.charalist[id].get("名字"));
         return info;
     }
-    function charalist_infos():Array<string> {
-        const infos:Array<string> = []
-        for (const i of c.charalist){
-            infos.push(target_info(i.id))
+    function charalist_infos(): Array<string> {
+        const infos: Array<string> = [];
+        for (const i of c.charalist) {
+            infos.push(target_info(i.id));
         }
         return infos;
     }
@@ -221,7 +223,7 @@ function ui_main() {
     era.page();
     const num = c.num();
     c.error_fix();
-    console.log(c.target)
+    console.log(c.target);
     era.t("主人" + c.master.get("名字"));
     era.t();
     era.t("助手" + c.assist.get("名字"));
@@ -231,41 +233,39 @@ function ui_main() {
     era.t("查看角色：");
     era.dropdown(charalist_infos(), target_choose, target_info(c.target.id));
     era.t();
-    /*
-    era.b('召唤角色', pages.goto(main_make_chara))
-    if (c.target.id == 1){
-        era.b('自慰', pages.goto(ui_make_love))
+    era.b("召唤角色", pages.goto, main_make_chara);
+    if (c.target.id == 1) {
+        era.b("自慰", pages.goto, ui_make_love);
+    } else {
+        era.b("调教角色", pages.goto, ui_make_love);
     }
-    else{
-        era.b('调教角色', pages.goto(ui_make_love))
-    }
-    */
     era.b("保存进度", pages.goto, main_save_game);
     era.b("读取进度", pages.goto, main_load_game);
     era.b("返回标题", pages.goto, ui_title);
 }
 
-/*
-function ui_make_love(){
-    function ui_make_love_main(){
-        era.page()
-        aa_ta.load_act()
-        for i_train in aa_ta.train_list:
-            era.b(i_train.name, act, i_train)
-        era.b('结束', pages.goto(ui_main))
+function ui_make_love() {
+    function ui_make_love_main() {
+        era.page();
+        era.b("下一回合", pages.goto, act);
+        era.b("结束", pages.goto, ui_main);
     }
-    function act(train){
-        era.page()
-        train.work()
-        pages.goto(ui_make_love_main)
+    function act() {
+        era.page();
+        train.work();
+        console.log(train);
+        pages.goto(ui_make_love_main);
     }
-    era.page()
-    c = datas['chara']
-    if c.assist.id == 0:
-        ta = aa_ta.train_admin.train_admin([c.master, ], [c.target, ])
-    else:
-        ta = aa_ta.train_admin.train_admin([c.master, ], [c.target, ], [c.assist, ])
-    datas['train'] = ta
-    era.b('开始', pages.goto(ui_make_love_main))
+    const c = datas.characters;
+    era.page();
+    const train = new aa.e.site();
+
+    for (const i of [c.player, c.target, c.assist]) {
+        if (i.id != 0) {
+            train.add_chara(i);
+        }
+    }
+    train.set_default();
+    console.log(train.characters);
+    era.b("开始", pages.goto, ui_make_love_main);
 }
-*/
