@@ -48,6 +48,7 @@ class act_insert extends aa.a.act {
         this.name = "插入";
         this.describe = "test2";
         this.insertion = insertion;
+        this.info = insert_info
         this.start_point = insert_info.start_point;
         this.p_c = insert_info.start_point.object_at.master;
         this.p_o = insert_info.start_point.object_at;
@@ -83,7 +84,7 @@ function active_will_check(p_c, a_c, info, insertion): number {
     return;
 }
 
-class insert extends aa.ag.act_group{
+class insert extends aa.ag.act_group {
     name: string;
     describe: string;
     act_list: Array<act_insert>;
@@ -92,9 +93,9 @@ class insert extends aa.ag.act_group{
     entrance: object_insert_point;
     insertion: object_insert;
     constructor() {
-        super()
-        this.name = "";
-        this.describe = "";
+        super();
+        this.name = "插入";
+        this.describe = "进行插入";
         this.act_list = [];
         this.active_character = new ca.character();
         this.passive_character = new ca.character();
@@ -104,7 +105,8 @@ class insert extends aa.ag.act_group{
     list_organ(): Array<act_insert> {
         //let enter_pos = this.entrance.points[1]//举个例子
         const outside = this.passive_character.organs.get_organ("外界").object_insert;
-        const a_g_able = find_path(
+        let a_g_able = [];
+        a_g_able = find_path(
             this.entrance,
             outside,
             this.insertion,
@@ -115,7 +117,11 @@ class insert extends aa.ag.act_group{
         });
         //自动进行选择
         //console.log(a_g_able);
-        return a_g_able[0].path;
+        try {
+            return a_g_able[0].path;
+        } finally {
+            return null;
+        }
     }
     set_default(
         passive_character: ca.character,
@@ -169,7 +175,7 @@ class insert_admin extends aa.ag.act_admin {
         this.characters = characters;
         for (const j in characters) {
             for (const n of characters[j].organs.insert_able_organ_list()) {
-                //console.log(characters[j].organs.insert_able_organ_list());
+                //console.log(n);
                 insertions.push(n);
             }
         }
@@ -226,7 +232,7 @@ function find_path(
     } //拷贝，不然只会push一个引用
 
     function dfs(pos: object_insert_point, rest_length: number, pre: object_insert_point): void {
-        //console.log(pos)
+    
         if (pos.total_aperture <= 0) {
             return;
         } //没开孔，返回
@@ -236,6 +242,7 @@ function find_path(
         if (pos.object_at.total_space.volume <= 0) {
             return;
         } //没开孔，返回
+        
 
         const info = new insert_info();
         info.start_point = pre;
@@ -248,9 +255,9 @@ function find_path(
             info.percentage_through = 0;
         }
         //info处理
-
         const a = new act_insert();
         a.set_default(info, insertion);
+        //console.log(a)
         const a_will = a.will();
         if (a.able() <= 0) {
             return;
@@ -377,6 +384,10 @@ class object_insert {
     }
 
     dilate(): number {
+        //console.log("____")
+        //console.log(this.prototype)
+        //console.log(this)
+        
         const val = this.prototype.get_num("扩张");
         return val;
     }
@@ -472,8 +483,7 @@ function load_map(
         //获取半径
         posInfo.forEach((s) => {
             const m = /^(.*)_(\d+(?:\.\d+)?)$/.exec(s); //魔法代码(通过正则表达式来匹配)
-            
-            
+
             if (!m) {
                 return;
             }

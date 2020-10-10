@@ -42,9 +42,16 @@ class modifier_admin {
             }
             return mlt;
         }
+        if (this.modifiers == {}) {
+            return val;
+        }
         //add_get是在get时提供修正，不影响原值
-        const a = (val + g_add(key)) * g_mlt(key);
-        return a;
+        try {
+            const a = (val + g_add(key)) * g_mlt(key);
+            return a;
+        } finally {
+            return val;
+        }
     }
     add_alt(key: string, val: number): number {
         function a_add(key: string): number {
@@ -66,8 +73,12 @@ class modifier_admin {
             return mlt;
         }
         //add_alt是在add时提供修正，会影响“加上去的值”
-        const a = (val + a_add(key)) * a_mlt(key);
-        return a;
+        try {
+            const a = (val + a_add(key)) * a_mlt(key);
+            return a;
+        } finally {
+            return val;
+        }
     }
     names(): Array<string> {
         const a: Array<string> = [];
@@ -90,7 +101,7 @@ class modifier_admin {
             return modifier;
         }
     }
-    
+
     /*
     clone(): modifier_admin {
         const a = new modifier_admin();

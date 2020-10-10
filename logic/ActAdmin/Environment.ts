@@ -37,6 +37,7 @@ class site {
         this.check_acts()
     }
     check_acts():void{
+        //console.log(this.characters)
         const insert = new aa.i.insert_admin()
         insert.set_default(this.characters,this.items)
         this.acts.push(insert)
@@ -44,6 +45,7 @@ class site {
     add_chara(character:ca.character):void{
         if (!(String(character.id) in this.characters)){
             this.characters[String(character.id)] = character
+            this.characters[String(character.id)].site = this
         }
     }
     add_item(item:ia.item):void{
