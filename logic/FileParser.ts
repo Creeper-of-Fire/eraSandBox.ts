@@ -79,9 +79,6 @@ namespace OrganDefaultIndex {
     export function 插入结构定义(model: string): string {
         return "./data/配置表/器官注册/" + model + ".yml";
     }
-    export function 器官数据定义(type: string): string {
-        return "./data/配置表/角色初始/" + type + ".yml";
-    }
 }
 
 namespace ModifierDefaultIndex {
@@ -121,7 +118,7 @@ function getRandomInt(min: number, max: number): number {
 function getRandomNumber(min: number, max: number): number {
     const Range = max - min;
     const Rand = Math.random(); //获取[0-1）的随机数
-    return min + Rand * Range; //放大取整
+    return min + Rand * Range; //放大
 }
 function getRandomFromArray(list: Array<any>) {
     return list[getRandomInt(0, list.length - 1)];

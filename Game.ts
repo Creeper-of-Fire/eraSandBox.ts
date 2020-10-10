@@ -170,7 +170,6 @@ function ui_main() {
     function target_choose(target_choose: string) {
         c.target = c.charalist[Number(target_choose[1])];
         pages.goto(ui_main);
-        console.log(c.target);
     }
     function main_save_game() {
         era.page();
@@ -223,7 +222,6 @@ function ui_main() {
     era.page();
     const num = c.num();
     c.error_fix();
-    console.log(c.target);
     era.t("主人" + c.master.get("名字"));
     era.t();
     era.t("助手" + c.assist.get("名字"));
@@ -253,7 +251,6 @@ function ui_make_love() {
     function act() {
         era.page();
         train.work();
-        console.log(train);
         pages.goto(ui_make_love_main);
     }
     const c = datas.characters;
@@ -266,6 +263,5 @@ function ui_make_love() {
         }
     }
     train.set_default();
-    console.log(train.characters);
     era.b("开始", pages.goto, ui_make_love_main);
 }

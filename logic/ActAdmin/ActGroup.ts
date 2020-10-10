@@ -16,7 +16,7 @@ class act_admin {
         this.characters = {};
         this.acts = [];
     }
-    set_default(characters: Record<string, ca.character>, a?, b?) {
+    set_default(characters: Record<string, ca.character>, a?, b?,c?,d?,e?) {
         this.act_type = act_group;
         this.characters = characters;
         for (const i in characters) {

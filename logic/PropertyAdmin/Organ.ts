@@ -6,23 +6,24 @@ import pa = require("../PropertyAdmin/__init__");
 export { organ_admin, organ };
 
 class organ_admin {
-    //model: string//角色的器官模板，比如human
+    model: string; //角色的器官模板，比如human
     private all_organs: Record<string, organ>;
     master: ca.character;
 
     constructor() {
-        //this.model = 'human'
+        this.model = "human";
         this.all_organs = {};
     }
 
     set_default(master: ca.character, model: string): void {
+        this.model = model;
         this.master = master;
         const struct_data = fp.load_yaml(fp.OrganDefaultIndex.器官结构定义(model));
         //种族默认器官结构
         const insert_data = fp.load_yaml(fp.OrganDefaultIndex.插入结构定义(model));
         this.all_organs["全身"] = new organ();
         this.all_organs["全身"].set_default("全身", this, struct_data);
-        this._insert_default(insert_data);
+        this._set_default_insert_structure(insert_data);
     }
     data_default(
         organ_data: Record<
@@ -54,55 +55,37 @@ class organ_admin {
         const a = new organ();
         return a;
     }
-    private _insert_default(insert_data): void {
-        function load_map(data: Record<string, unknown>, organs: Record<string, organ>): void {
-            for (const k in organs) {
-                organs[k].object_insert.points = [];
-            }
-            for (const k in data) {
-                const posInfo = k.split(",");
-                const pos: Array<aa.i.object_insert_point> = [];
-                const rd = Number(data[k]);
-                posInfo.forEach((s) => {
-                    const m = /^(.*)_(\d+(?:\.\d+)?)$/.exec(s); //魔法代码
-                    if (!m) {
-                        return;
-                    }
-                    if (m[1] in organs) {
-                        const o = organs[m[1]];
-                        const p = new aa.i.object_insert_point();
-                        p.set_default(o, Number(m[2]), rd);
-                        pos.push(p);
-                        o.object_insert.points.push(p);
-                    }
-                });
-                pos.forEach((p1) => {
-                    pos.forEach((p2) => {
-                        if (p1 == p2) {
-                            return;
-                        }
-                        p1.toward.push(p2);
-                    });
-                });
-            }
-        }
+    private _set_default_insert_structure(insert_data): void {
+        const object_inserts: Record<string, aa.i.object_insert> = {};
         for (const i in this.all_organs) {
             this.all_organs[i].object_insert = new aa.i.object_insert();
             this.all_organs[i].object_insert.set_default(this.master, this.all_organs[i]);
+            object_inserts[i] = this.all_organs[i].object_insert;
+            //提取的是引用
         }
-        load_map(insert_data, this.all_organs);
+        aa.i.load_map(insert_data["位点连接"], object_inserts);
+        //初始化，然后连接
+        for (const i in this.all_organs) {
+            this.all_organs[i].object_insert = object_inserts[i];
+        }
     }
     insert_able_organ_list(): Array<aa.i.object_insert> {
         const list: Array<aa.i.object_insert> = [];
+        //console.log(this.all_organs["外界"].object_insert.points);
         for (const i of this.all_organs["外界"].object_insert.points) {
-            list.push(i.object_at);
+            //console.log(i);
+            for (const j of i.toward) {
+                list.push(j.object_at);
+            }
         }
         return list;
     }
     insert_able_point_list(): Array<aa.i.object_insert_point> {
         const list: Array<aa.i.object_insert_point> = [];
         for (const i of this.all_organs["外界"].object_insert.points) {
-            list.push(i);
+            for (const j of i.toward) {
+                list.push(j);
+            }
         }
         return list;
     }
@@ -115,6 +98,7 @@ class organ {
     name: string;
     private num_data: Record<string, number>;
     private str_data: Record<string, string>;
+    //直接显示给玩家的数据
 
     private o_admin: organ_admin;
     //本质上，一个角色的所有的organ都是存储在一个一层的dict里面的，以方便外部直接调用彼此
@@ -127,7 +111,6 @@ class organ {
 
     constructor() {
         this.name = "";
-
         this.num_data = {
             //'等级': 0,//似乎等级应该单独出来
             经验: 0,
@@ -140,8 +123,10 @@ class organ {
             欲望: 0,
         };
         //初始化相关的数据，即使在战斗中它们也会起作用
-        //display_data，直接显示给玩家的数据
+        this.o_admin = new organ_admin();
         this.modifiers = new pa.m.modifier_admin();
+        this.low_list = [];
+        this.object_insert = new aa.i.object_insert();
     }
 
     set_default(name: string, o_admin: organ_admin, struct_data: Record<string, any>): void {
@@ -266,24 +251,12 @@ class organ {
                 i_part._add_num(key, add_val);
             }
         }
-    }
+    } //尚未完工
 
     /*
-    modifiers_names() {
-        return this.modifiers.names()
-    }
-    quote_modifiers(){
-        return this.modifiers
-    }
-    clone_modifiers(){
-        return this.modifiers.clone()
-    }
-*/
-
     add_point(position: number, total_aperture: number): void {
         this.object_insert.add_point(position, total_aperture);
-    }
-    destruction(): number {
+    }*/ destruction(): number {
         //破坏度，最大100，会查找自己的下级器官，得到破坏度上限
         let part = 0;
         let val = 0;

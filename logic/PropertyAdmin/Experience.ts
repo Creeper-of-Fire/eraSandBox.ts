@@ -21,7 +21,7 @@ class experience_admin {
                 data_list[i] = b;
             }
         }
-        this.data_list = data_list;
+        this.data_list = data_list; //然后character调用这个玩意
     }
 }
 class experience {

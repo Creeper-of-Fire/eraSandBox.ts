@@ -122,6 +122,7 @@ class character {
             );
         }
         this.organs.set_default(this, data["器官模板"] as string);
+        //console.log(this.organs.insert_able_organ_list())
         if (data["器官"] != null) {
             this.organs.data_default(
                 data["器官"] as Record<
@@ -138,12 +139,13 @@ class character {
         }
         this.equipments.set_default(type);
         if ("经历" in data) {
+            //利用经历，再进行一次加载
             this.experiences.set_default(data["经历"] as Record<string, string | number>);
             const c = this.experiences.data_list;
             for (const i in c) {
                 this.modifiers.set_default(
                     c[i]["修正"] as Record<string, Record<string, string | number>>
-                );
+                ); //添加修正的时候，是利用了字典的特性来覆盖了之前的修正
                 this._data_default(c[i]["基础"] as Record<string, string | number>);
                 if (c[i]["器官"] != null) {
                     this.organs.data_default(
@@ -173,12 +175,12 @@ class character {
                 this.num_data[key] =
                     this.num_data[key] +
                     (fp.load_process(data[key] as string | number) as number);
-            }
+            } //注意这里是加号，这是为了进行多次配置而进行的改动
         }
         for (const key in this.str_data) {
             if (key in data) {
                 this.str_data[key] = fp.load_process(data[key] as string | number) as string;
-            }
+            } //对于字符串，后面的配置信息会直接覆盖前面的，所以还请注意
         }
     }
 

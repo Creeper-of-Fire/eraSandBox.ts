@@ -86,7 +86,7 @@ class modifier_admin {
         if (val in a) {
             return a[val];
         } else {
-            console.log("modifier_type_error when auto_set");
+            //console.log("modifier_type_error when auto_set");
             return modifier;
         }
     }

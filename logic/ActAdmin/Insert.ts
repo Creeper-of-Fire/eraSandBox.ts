@@ -3,8 +3,9 @@ import ia = require("../ItemAdmin");
 import pa = require("../PropertyAdmin/__init__");
 import aa = require("../ActAdmin/__init__");
 import era = require("../../engine/era");
+import fp = require("../FileParser");
 
-export { act_insert, insert, object_insert_point, object_insert, insert_admin };
+export { act_insert, insert, object_insert_point, object_insert, insert_admin, load_map };
 
 class act_insert extends aa.a.act {
     p_o: object_insert;
@@ -12,13 +13,13 @@ class act_insert extends aa.a.act {
     insertion: object_insert;
     //end_point: object_insert_point;
     start_point: object_insert_point;
-    constructor(){
-        super()
-        this.p_o = new object_insert()
-        this.info = new insert_info()
-        this.insertion = new object_insert()
+    constructor() {
+        super();
+        this.p_o = new object_insert();
+        this.info = new insert_info();
+        this.insertion = new object_insert();
         //this.end_point = new object_insert_point()
-        this.start_point = new object_insert_point()
+        this.start_point = new object_insert_point();
     }
     will(): number {
         return (
@@ -36,17 +37,16 @@ class act_insert extends aa.a.act {
     }
     work(): void {
         this.dilate_organ();
-        for (const i in this.spek()){
-            era.t(i)
+        for (const i in this.spek()) {
+            era.t(i);
         }
-        
     }
 
     //查看扩张值，如果扩张值过小则添加“疼痛值”和“损伤值”，并激活扩张效果
 
     set_default(insert_info: insert_info, insertion: object_insert): void {
         this.name = "插入";
-        this.describe = 'test2'
+        this.describe = "test2";
         this.insertion = insertion;
         this.start_point = insert_info.start_point;
         this.p_c = insert_info.start_point.object_at.master;
@@ -64,7 +64,7 @@ function passive_will_check(p_c, a_c, info, insertion): number {
     ) {
         return 1;
     } else {
-        return 0;
+        return 1;
     }
     return 0;
 }
@@ -83,7 +83,7 @@ function active_will_check(p_c, a_c, info, insertion): number {
     return;
 }
 
-class insert {
+class insert extends aa.ag.act_group{
     name: string;
     describe: string;
     act_list: Array<act_insert>;
@@ -92,9 +92,14 @@ class insert {
     entrance: object_insert_point;
     insertion: object_insert;
     constructor() {
+        super()
         this.name = "";
         this.describe = "";
         this.act_list = [];
+        this.active_character = new ca.character();
+        this.passive_character = new ca.character();
+        this.entrance = new object_insert_point();
+        this.insertion = new object_insert();
     }
     list_organ(): Array<act_insert> {
         //let enter_pos = this.entrance.points[1]//举个例子
@@ -109,7 +114,7 @@ class insert {
             return b.will - a.will;
         });
         //自动进行选择
-        console.log(a_g_able[0].path);
+        //console.log(a_g_able);
         return a_g_able[0].path;
     }
     set_default(
@@ -164,6 +169,7 @@ class insert_admin extends aa.ag.act_admin {
         this.characters = characters;
         for (const j in characters) {
             for (const n of characters[j].organs.insert_able_organ_list()) {
+                //console.log(characters[j].organs.insert_able_organ_list());
                 insertions.push(n);
             }
         }
@@ -172,18 +178,19 @@ class insert_admin extends aa.ag.act_admin {
                 insertions.push(n.object_insert);
             }
         }
-        console.log(insertions)
+        //console.log(insertions);
         for (const i in characters) {
             //i是被动
             for (const j in characters) {
                 //j是主动
-                if (i == j) {
-                    continue;
-                }
                 for (const m of characters[i].organs.insert_able_point_list()) {
                     for (const n of insertions) {
+                        if (m.object_at == n) {
+                            continue;
+                        }
                         const ag = new this.act_type();
                         ag.set_default(characters[i], characters[j], m, n);
+                        //console.log(ag)
                         ag.list_organ();
                     }
                 }
@@ -214,13 +221,12 @@ function find_path(
     function add_path(): void {
         const p: insert_path = new insert_path();
         p.path = path.path.slice(0); //数组浅拷贝
-        //p.last_organ = path.last_organ
-        //p.last_position = path.last_position
         p.will = path.will;
         paths.push(p);
     } //拷贝，不然只会push一个引用
 
     function dfs(pos: object_insert_point, rest_length: number, pre: object_insert_point): void {
+        //console.log(pos)
         if (pos.total_aperture <= 0) {
             return;
         } //没开孔，返回
@@ -327,16 +333,22 @@ function find_path(
 class insert_path {
     path: Array<act_insert>;
     will: number;
-    //last_organ: object_insert
-    //last_position: number[] //上一个点的位置行进方向 at most 2 (front and back)
+    constructor() {
+        this.path = [];
+        this.will = 0;
+    }
 } //插入信息
 
 class insert_info {
     //插入信息分为两种，点对点和点到器官到点
     start_point: object_insert_point;
-    //end_point: object_insert_point
     object_through: object_insert;
     percentage_through: number;
+    constructor() {
+        this.start_point = new object_insert_point();
+        this.object_through = new object_insert();
+        this.percentage_through = 0;
+    }
 }
 
 class object_insert {
@@ -347,20 +359,21 @@ class object_insert {
     //属于自己的修正，和prototype共通
     master: ca.character;
     //无主的物体默认丢给NULL角色
-    prototype: pa.o.organ|ia.item_part;
+    prototype: pa.o.organ | ia.item_part;
     //来自于哪里
     total_space: space;
     used_space: space;
     occupy: space;
     //space同时用于两种情况：插入和被插入
-    constructor(){
-        this.points = []
-        this.name = ''
-        this.modifiers = new pa.m.modifier_admin()
-        this.master = new ca.character()
-        this.prototype = new pa.o.organ()
-        this.total_space = new space()
-        this.used_space = new space()
+    constructor() {
+        this.name = "";
+        this.points = [];
+        this.modifiers = new pa.m.modifier_admin();
+        this.master = new ca.character();
+        //this.prototype = new pa.o.organ();//请勿初始化这个
+        this.total_space = new space();
+        this.used_space = new space();
+        this.occupy = new space();
     }
 
     dilate(): number {
@@ -368,23 +381,34 @@ class object_insert {
         return val;
     }
     add_modifiers(): void {}
-    add_point(position: number, total_aperture: number): void {
-        const op = new object_insert_point();
-        op.set_default(this, position, total_aperture);
-        this.points.push(op);
+    add_point(point: object_insert_point): void {
+        this.points.push(point);
+        //this.points = _unique(this.points);
     }
-    set_default(master: ca.character, prototype: pa.o.organ|ia.item_part): void {
-        //目前只支持将organ进行转换，因为道具还没有开始配置
+    set_default(master: ca.character, prototype: pa.o.organ | ia.item_part): void {
+        //目前，道具还没有开始配置
         this.name = prototype.name;
         //points这玩意需要prototype那边自行添加
         this.modifiers = prototype.modifiers;
         this.master = master;
         this.prototype = prototype;
-        /*
-            this.space = prototype.space
-            this.occupy = prototype.occupy
-            这两个玩意的配置放在哪我还没有想好……
-            */
+        const data = fp.load_yaml(fp.OrganDefaultIndex.插入结构定义(this.master.organs.model))[
+            "空间配置"
+        ] as Record<string, Record<string, Record<string, string | number>>>;
+        for (const i in data["occupy"]) {
+            if (i in data["occupy"]) {
+                if (this.name in data["occupy"][i]) {
+                    this.occupy.set(i, Number(fp.load_process(data["occupy"][i][this.name])));
+                }
+            }
+        }
+        for (const i in data["space"]) {
+            if (i in data["space"]) {
+                if (this.name in data["space"][i]) {
+                    this.used_space.set(i, Number(fp.load_process(data["space"][i][this.name])));
+                }
+            }
+        }
     }
 }
 
@@ -396,14 +420,24 @@ class object_insert_point {
     used_aperture: number;
     modifiers: pa.m.modifier_admin;
     constructor() {
+        this.object_at = new object_insert();
+        this.position = 0;
         this.toward = [];
-        this.total_aperture = 0
-        this.used_aperture = 0
+        this.total_aperture = 0;
+        this.used_aperture = 0;
+        this.modifiers = new pa.m.modifier_admin();
     }
     link(p: object_insert_point): void {
+        if (p == this) {
+            return;
+        }
         this.toward.push(p);
         p.toward.push(this);
+        //this.toward = _unique(this.toward);
+        //p.toward = _unique(p.toward);
+        //console.log(p.toward);
     }
+
     set_default(object_at, position, total_aperture): void {
         this.object_at = object_at;
         this.position = position;
@@ -412,11 +446,60 @@ class object_insert_point {
     dilate(): number {
         //扩张度
         let val = this.object_at.dilate();
-        for (const i of this.toward) val = val + i.object_at.dilate();
-        val = val / (this.toward.length + 1);
+        let length = 0;
+        for (const i in this.toward) {
+            val = val + this.toward[i].object_at.dilate();
+            length = length + 1;
+        }
+        val = val / length;
         return val;
     }
 }
+function load_map(
+    data: Record<string, string | number>,
+    object: Record<string, object_insert>
+): void {
+    /*
+    for (const k in object as Record<string, object_insert>) {
+        object[k].points = [];
+        //初始化信息
+    }
+    */ //请自己初始化
+    for (const key in data as Record<string, string | number>) {
+        const posInfo: Array<string> = key.split(",");
+        const pos: Array<object_insert_point> = [];
+        const rd: number = Number(fp.load_process(data[key]));
+        //获取半径
+        posInfo.forEach((s) => {
+            const m = /^(.*)_(\d+(?:\.\d+)?)$/.exec(s); //魔法代码(通过正则表达式来匹配)
+            
+            
+            if (!m) {
+                return;
+            }
+            if (m[1] in object) {
+                const o = object[m[1]];
+                //console.log(pos)
+                //用o提取对应的结构
+                const p = new object_insert_point();
+                p.set_default(o, Number(m[2]), rd);
+                //创建节点
+                pos.push(p);
+                o.add_point(p);
+                //节点添加到器官
+            }
+        });
+        //console.log(pos)
+        for (const p1 of pos) {
+            for (const p2 of pos) {
+                p1.link(p2);
+                //console.log(p1)
+            }
+        }
+        //console.log(pos)
+    }
+}
+
 class space {
     surface: number;
     volume: number;
@@ -431,4 +514,47 @@ class space {
         this.length = 0;
         this.aperture = 0;
     }
+    set(key: string, val: number) {
+        switch (key) {
+            case "surface":
+                this.surface = val;
+                break;
+            case "volume":
+                this.volume = val;
+                break;
+            case "length":
+                this.length = val;
+                break;
+            case "aperture":
+                this.aperture = val;
+                break;
+
+            default:
+                break;
+        }
+    }
+}
+function _unique(list): Array<any> {
+    /*const n = {};
+    const r = []; //n为hash表，r为临时数组
+    for (const i in list) {
+        if (!n[list[i]]) {
+            //如果hash表中没有当前项
+            n[list[i]] = true; //存入hash表
+            r.push(list[i]); //把当前数组的当前项push到临时数组里面
+        }
+    }
+    return r;
+    */
+    /*
+    for (let i = 0; i < list.length; i++) {
+        for (let j = i + 1; j < list.length; j++) {
+            if (list[i] == list[j]) {
+                //第一个等同于第二个，splice方法删除第二个
+                list.splice(j, 1);
+                j--;
+            }
+        }
+    }*/
+    return list;
 }
