@@ -1,26 +1,25 @@
-import fp = require("../FileParser");
-import ca = require("../CharacterAdmin");
-import aa = require("../ActAdmin/__init__");
-import pa = require("../PropertyAdmin/__init__");
+import D = require("../../Data/__init__");
+import C = require("../__init__");
+import A = require("../../Act/__init__");
 
 export { organ_admin, organ };
 
 class organ_admin {
     model: string; //角色的器官模板，比如human
     private all_organs: Record<string, organ>;
-    master: ca.character;
+    master: C.ca.character;
 
     constructor() {
         this.model = "human";
         this.all_organs = {};
     }
 
-    set_default(master: ca.character, model: string): void {
+    set_default(master: C.ca.character, model: string): void {
         this.model = model;
         this.master = master;
-        const struct_data = fp.load_yaml(fp.OrganDefaultIndex.器官结构定义(model));
+        const struct_data = D.fp.load_yaml(D.fp.OrganDefaultIndex.器官结构定义(model));
         //种族默认器官结构
-        const insert_data = fp.load_yaml(fp.OrganDefaultIndex.插入结构定义(model));
+        const insert_data = D.fp.load_yaml(D.fp.OrganDefaultIndex.插入结构定义(model));
         this.all_organs["全身"] = new organ();
         this.all_organs["全身"].set_default("全身", this, struct_data);
         this._set_default_insert_structure(insert_data);
@@ -56,23 +55,18 @@ class organ_admin {
         return a;
     }
     private _set_default_insert_structure(insert_data): void {
-        const object_inserts: Record<string, aa.i.object_insert> = {};
+        const object_inserts: Record<string, A.i.object_insert> = {};
         for (const i in this.all_organs) {
-            this.all_organs[i].object_insert = new aa.i.object_insert();
+            this.all_organs[i].object_insert = new A.i.object_insert();
             this.all_organs[i].object_insert.set_default(this.master, this.all_organs[i]);
             object_inserts[i] = this.all_organs[i].object_insert;
             //提取的是引用
         }
-        aa.i.load_map(insert_data["位点连接"], object_inserts);
+        A.i.load_map(insert_data["位点连接"], object_inserts);
         //初始化，然后连接
-        /*
-        for (const i in this.all_organs) {
-            this.all_organs[i].object_insert = object_inserts[i];
-        }
-        */
     }
-    insert_able_organ_list(): Array<aa.i.object_insert> {
-        const list: Array<aa.i.object_insert> = [];
+    insert_able_organ_list(): Array<A.i.object_insert> {
+        const list: Array<A.i.object_insert> = [];
         for (const i of this.all_organs["外界"].object_insert.points) {
             for (const j of i.toward) {
                 list.push(j.object_at);
@@ -80,8 +74,8 @@ class organ_admin {
         }
         return list;
     }
-    insert_able_point_list(): Array<aa.i.object_insert_point> {
-        const list: Array<aa.i.object_insert_point> = [];
+    insert_able_point_list(): Array<A.i.object_insert_point> {
+        const list: Array<A.i.object_insert_point> = [];
         for (const i of this.all_organs["外界"].object_insert.points) {
             for (const j of i.toward) {
                 list.push(j);
@@ -102,11 +96,11 @@ class organ {
 
     private o_admin: organ_admin;
     //本质上，一个角色的所有的organ都是存储在一个一层的dict里面的，以方便外部直接调用彼此
-    modifiers: pa.m.modifier_admin;
+    modifiers: C.m.modifier_admin;
     //每个organ会有属于自己的修正
     private low_list: Array<organ>;
     //每个organ有它下属organ的指针
-    object_insert: aa.i.object_insert;
+    object_insert: A.i.object_insert;
     //一个镜像器官，掌管插入类
 
     constructor() {
@@ -124,9 +118,9 @@ class organ {
         };
         //初始化相关的数据，即使在战斗中它们也会起作用
         this.o_admin = new organ_admin();
-        this.modifiers = new pa.m.modifier_admin();
+        this.modifiers = new C.m.modifier_admin();
         this.low_list = [];
-        this.object_insert = new aa.i.object_insert();
+        this.object_insert = new A.i.object_insert();
     }
 
     set_default(name: string, o_admin: organ_admin, struct_data: Record<string, any>): void {
@@ -151,10 +145,11 @@ class organ {
         const data = organ_data[this.name];
         for (const key in this.num_data) {
             this.num_data[key] =
-                this.num_data[key] + (fp.load_process(data[key] as string | number) as number);
+                this.num_data[key] +
+                (D.dp.processLoadData(data[key] as string | number) as number);
         }
         for (const key in this.str_data) {
-            this.str_data[key] = fp.load_process(data[key] as string | number) as string;
+            this.str_data[key] = D.dp.processLoadData(data[key] as string | number) as string;
         }
         if ("修正" in data) {
             this.modifiers.set_default(
@@ -256,7 +251,8 @@ class organ {
     /*
     add_point(position: number, total_aperture: number): void {
         this.object_insert.add_point(position, total_aperture);
-    }*/ destruction(): number {
+    }*/
+    destruction(): number {
         //破坏度，最大100，会查找自己的下级器官，得到破坏度上限
         let part = 0;
         let val = 0;

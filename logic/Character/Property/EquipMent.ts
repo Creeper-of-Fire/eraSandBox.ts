@@ -1,8 +1,6 @@
-import pa = require("./__init__")
+import C = require("../__init__");
 
-export {
-    equipment,equipment_admin
-}
+export { equipment, equipment_admin };
 
 class equipment_admin {
     constructor() {}

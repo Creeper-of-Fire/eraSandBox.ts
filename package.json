@@ -1,0 +1,18 @@
+{
+  "name": "erasb.ts",
+  "version": "1.0.0",
+  "description": "// eraSandBox.js",
+  "main": "Game.js",
+  "dependencies": {
+    "eslint": "^7.10.0",
+    "iconv-lite": "^0.6.2",
+    "js-yaml": "^3.14.0",
+    "uuid": "^8.3.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

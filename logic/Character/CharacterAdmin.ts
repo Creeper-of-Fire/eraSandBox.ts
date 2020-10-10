@@ -1,6 +1,7 @@
-import aa = require("./ActAdmin/__init__");
-import fp = require("./FileParser");
-import pa = require("./PropertyAdmin/__init__");
+import I = require("../Item/__init__");
+import A = require("../Act/__init__");
+import D = require("../Data/__init__");
+import C = require("./__init__");
 
 export { character, character_admin };
 
@@ -72,21 +73,21 @@ class character_admin {
 class character {
     id: number;
     type: string; //角色的类型，比如“玩家”
-    modifiers: pa.m.modifier_admin;
-    organs: pa.o.organ_admin;
-    equipments: pa.e.equipment_admin;
-    experiences: pa.exp.experience_admin;
-    site: aa.e.site;
+    modifiers: C.m.modifier_admin;
+    organs: C.o.organ_admin;
+    equipments: C.e.equipment_admin;
+    experiences: C.exp.experience_admin;
+    site: A.e.site;
     num_data: Record<string, number>;
     str_data: Record<string, string>;
     constructor() {
         this.id = 0;
         this.type = "NULL";
-        this.modifiers = new pa.m.modifier_admin();
-        this.organs = new pa.o.organ_admin();
-        this.equipments = new pa.e.equipment_admin();
-        this.experiences = new pa.exp.experience_admin();
-        this.site = new aa.e.site();
+        this.modifiers = new C.m.modifier_admin();
+        this.organs = new C.o.organ_admin();
+        this.equipments = new C.e.equipment_admin();
+        this.experiences = new C.exp.experience_admin();
+        this.site = new A.e.site();
         this.num_data = {
             最大体力: 0,
             体力: 0,
@@ -113,7 +114,7 @@ class character {
         this.id = id;
         this.type = type;
         //this.器官模板 = 器官模板
-        const data = fp.load_yaml(fp.CharacterDefaultIndex.角色数据定义(type));
+        const data = D.fp.load_yaml(D.fp.CharacterDefaultIndex.角色数据定义(type));
         this._data_default(data["基础"] as Record<string, number | string>);
 
         if ("修正" in data) {
@@ -173,18 +174,18 @@ class character {
             if (key in data) {
                 this.num_data[key] =
                     this.num_data[key] +
-                    (fp.load_process(data[key] as string | number) as number);
+                    (D.dp.processLoadData(data[key] as string | number) as number);
             } //注意这里是加号，这是为了进行多次配置而进行的改动
         }
         for (const key in this.str_data) {
             if (key in data) {
-                this.str_data[key] = fp.load_process(data[key] as string | number) as string;
+                this.str_data[key] = D.dp.processLoadData(data[key] as string | number) as string;
             } //对于字符串，后面的配置信息会直接覆盖前面的，所以还请注意
         }
     }
 
     //希望少用
-    get(key: string): unknown {
+    get(key: string): string | number | null {
         if (key in this.num_data) {
             return this.get_num(key);
         } else if (key in this.str_data) {

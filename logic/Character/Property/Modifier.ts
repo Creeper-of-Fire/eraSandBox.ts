@@ -1,4 +1,4 @@
-import fp = require("../FileParser");
+import D = require("../../Data/__init__");
 
 export { modifier_admin };
 
@@ -10,7 +10,7 @@ class modifier_admin {
     set_default(data: Record<string, Record<string, string | number>>): void {
         for (const i in data) {
             for (const j in data[i]) {
-                const a = fp.load_process(data[i][j]);
+                const a = D.dp.processLoadData(data[i][j]);
                 if (a != 0) {
                     this.add_modifier(j, i);
                 }
@@ -96,16 +96,6 @@ class modifier_admin {
             return modifier;
         }
     }
-
-    /*
-    clone(): modifier_admin {
-        const a = new modifier_admin();
-        for (const i in this.modifiers) {
-            a.modifiers[i] = JSON.parse(JSON.stringify(this.modifiers[i]));
-        }
-        return a;
-    }
-    */
 }
 
 class modifier {
@@ -126,7 +116,7 @@ class modifier {
     }
     set_default(name): void {
         this.name = name;
-        const data = fp.load_yaml(fp.ModifierDefaultIndex.配置文件(this.constructor.name));
+        const data = D.fp.load_yaml(D.fp.ModifierDefaultIndex.配置文件(this.constructor.name));
         if (this.name in data) {
             this.describe = data[this.name]["describe"];
             this.get_add = data[this.name]["g_add"];

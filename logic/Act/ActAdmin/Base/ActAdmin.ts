@@ -1,20 +1,21 @@
-import ca = require("../CharacterAdmin");
-import fp = require("../FileParser");
+import A = require("../../__init__");
+import C = require("../../../Character/__init__");
+import D = require("../../../Data/__init__");
 
-export { act, speak_translate, speak_func };
+export { act, act_group, act_admin, speak_translate, speak_func };
 
 //目前为止，“旁观者”不参与一个动作，后续会进行添加
 class act {
     name: string;
     describe: string;
-    p_c: ca.character;
-    a_c: ca.character;
+    p_c: C.ca.character;
+    a_c: C.ca.character;
     feature: Array<string>;
     constructor() {
         this.name = "";
         this.describe = "";
-        this.p_c = new ca.character();
-        this.a_c = new ca.character();
+        this.p_c = new C.ca.character();
+        this.a_c = new C.ca.character();
         this.feature = [];
     }
 
@@ -30,7 +31,7 @@ class act {
 
     spek(): Array<string> {
         let list_for_rand: Array<Array<string>> = [];
-        const s_data = fp.load_yaml(fp.ActDefaultIndex.口上配置()) as Record<
+        const s_data = D.fp.load_yaml(D.fp.ActDefaultIndex.口上配置()) as Record<
             string,
             Array<Record<string, Record<string, Array<string>> | string>>
         >;
@@ -129,7 +130,7 @@ class act_hit extends act {
     }
 }
 function speak_translate(speak: string): string {
-    const t_data = fp.load_yaml(fp.ActDefaultIndex.描述()) as Record<
+    const t_data = D.fp.load_yaml(D.fp.ActDefaultIndex.描述()) as Record<
         string,
         string | Array<string>
     >;
@@ -138,13 +139,83 @@ function speak_translate(speak: string): string {
         if (typeof a == "string") {
             return a;
         } else {
-            return fp.getRandomFromArray(a);
+            return D.dp.getRandomFromArray(a);
         }
     }
     //功能暂时不做
     return speak;
 }
-function speak_func(speak:string): string {
+function speak_func(speak: string): string {
     //处理口上中类似于{balabala}的数据
     return speak;
+}
+
+class act_admin {
+    acts: Array<act_group>;
+    act_type: typeof act_group;
+    characters: Record<string, C.ca.character>;
+    constructor() {
+        this.characters = {};
+        this.acts = [];
+    }
+    set_default(characters: Record<string, C.ca.character>, a?, b?, c?, d?, e?) {
+        this.act_type = act_group;
+        this.characters = characters;
+        for (const i in characters) {
+            for (const j in characters) {
+                if (i == j) {
+                    continue;
+                }
+                const ag = new this.act_type();
+                ag.set_default();
+            }
+        }
+    }
+    work(): void {
+        for (const i of this.acts) {
+            i.work();
+        }
+    }
+}
+
+class act_group {
+    name: string;
+    describe: string;
+
+    active_character: C.ca.character;
+    passive_character: C.ca.character;
+    act_list: Array<A.a.act>;
+    constructor() {
+        this.name = "";
+        this.describe = "";
+        this.active_character = new C.ca.character();
+        this.passive_character = new C.ca.character();
+        this.act_list = [];
+    }
+
+    able(): number {
+        for (const i_act of this.act_list) {
+            if (i_act.able() == 0) {
+                return 0;
+            }
+            return 1;
+        }
+    }
+    will(): number {
+        let willing = 0;
+        for (const i_act of this.act_list) {
+            if (i_act.will() == 0) {
+                return 0;
+            } else {
+                willing = willing + i_act.will();
+            }
+        }
+        return willing;
+    }
+    work(): void {
+        for (const i_act of this.act_list) {
+            i_act.work();
+        }
+    }
+    set_default(a?, b?, c?, d?, e?, f?) {}
 }

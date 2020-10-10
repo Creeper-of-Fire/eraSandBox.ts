@@ -1,5 +1,5 @@
-import aa = require("./ActAdmin/__init__");
-import pa = require("./PropertyAdmin/__init__");
+import A = require("../Act/__init__");
+import C = require("../Character/__init__");
 
 export { item_admin, item, item_part };
 
@@ -9,24 +9,24 @@ class item_admin {
 }
 class item {
     name: string;
-    modifiers: pa.m.modifier_admin;
+    modifiers: C.m.modifier_admin;
     parts: Array<item_part>;
     constructor() {
         this.name = "";
-        this.modifiers = new pa.m.modifier_admin();
+        this.modifiers = new C.m.modifier_admin();
         this.parts = [];
     }
 }
 class item_part {
     name: string;
-    modifiers: pa.m.modifier_admin;
-    object_insert: aa.i.object_insert;
+    modifiers: C.m.modifier_admin;
+    object_insert: A.i.object_insert;
     num_data: Record<string, number>;
     str_data: Record<string, string>;
     constructor() {
         this.name = "";
-        this.modifiers = new pa.m.modifier_admin();
-        this.object_insert = new aa.i.object_insert();
+        this.modifiers = new C.m.modifier_admin();
+        this.object_insert = new A.i.object_insert();
         this.num_data = {};
         this.str_data = {};
     }

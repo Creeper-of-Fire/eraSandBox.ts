@@ -1,6 +1,6 @@
 import era = require("./engine/era");
 import ca = require("./logic/CharacterAdmin");
-import aa = require("./logic/ActAdmin/__init__");
+import a = require("./logic/ActAdmin/__init__");
 
 class page_admin {
     pages: Function[];
@@ -34,9 +34,9 @@ namespace pages {
     export function show_save_to_save() {}
 }
 class data_admin {
-    characters: ca.character_admin;
+    characters: C.ca.character_admin;
     constructor() {
-        this.characters = new ca.character_admin();
+        this.characters = new C.ca.character_admin();
     }
 }
 
@@ -132,7 +132,7 @@ function ui_start_old_game() {
 function ui_start_new_game_set() {
     era.page();
     function start_new_game() {
-        datas.characters = new ca.character_admin();
+        datas.characters = new C.ca.character_admin();
         ui_make_chara("玩家");
     }
     era.b("梦境的开端", start_new_game, { popup: "进行玩家属性设置" });
@@ -161,7 +161,7 @@ function ui_make_chara(ctype = "玩家") {
     }
 
     let keyname = "";
-    const temp = new ca.character();
+    const temp = new C.ca.character();
     temp.set_default(1,ctype);
     pages.goto(ui_make_chara_1);
 }
@@ -185,7 +185,7 @@ function ui_main() {
         era.b("返回", pages.back);
     }
     function load_goto() {
-        datas["chara"] = new ca.character_admin();
+        datas["chara"] = new C.ca.character_admin();
         datas["chara"].load();
         pages.goto(ui_main);
     }
@@ -255,7 +255,7 @@ function ui_make_love() {
     }
     const c = datas.characters;
     era.page();
-    const train = new aa.e.site();
+    const train = new a.e.site();
 
     for (const i of [c.player, c.target, c.assist]) {
         if (i.id != 0) {

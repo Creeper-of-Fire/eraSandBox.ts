@@ -1,5 +1,5 @@
-import pa = require("./__init__");
-import fp = require("../FileParser");
+import C = require("../__init__");
+import D = require("../../Data/__init__");
 export { experience_admin };
 
 class experience_admin {
@@ -10,10 +10,10 @@ class experience_admin {
         this.experiences = {};
     }
     set_default(list: Record<string, string | number>) {
-        const data = fp.load_yaml(fp.ExperienceDefaultIndex.经历());
+        const data = D.fp.load_yaml(D.fp.ExperienceDefaultIndex.经历());
         const data_list = {};
         for (const i in list) {
-            const a = fp.load_process(list[i]) as number;
+            const a = D.dp.processLoadData(list[i]) as number;
             if (a != 0) {
                 this.experiences[i] = new experience();
                 const b = data[i];
