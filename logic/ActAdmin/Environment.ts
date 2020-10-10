@@ -37,7 +37,6 @@ class site {
         this.check_acts()
     }
     check_acts():void{
-        //console.log(this.characters)
         const insert = new aa.i.insert_admin()
         insert.set_default(this.characters,this.items)
         this.acts.push(insert)

@@ -48,7 +48,7 @@ class act_insert extends aa.a.act {
         this.name = "插入";
         this.describe = "test2";
         this.insertion = insertion;
-        this.info = insert_info
+        this.info = insert_info;
         this.start_point = insert_info.start_point;
         this.p_c = insert_info.start_point.object_at.master;
         this.p_o = insert_info.start_point.object_at;
@@ -103,7 +103,6 @@ class insert extends aa.ag.act_group {
         this.insertion = new object_insert();
     }
     list_organ(): Array<act_insert> {
-        //let enter_pos = this.entrance.points[1]//举个例子
         const outside = this.passive_character.organs.get_organ("外界").object_insert;
         let a_g_able = [];
         a_g_able = find_path(
@@ -116,10 +115,9 @@ class insert extends aa.ag.act_group {
             return b.will - a.will;
         });
         //自动进行选择
-        //console.log(a_g_able);
-        try {
+        if (a_g_able.length != 0) {
             return a_g_able[0].path;
-        } finally {
+        } else {
             return null;
         }
     }
@@ -175,7 +173,6 @@ class insert_admin extends aa.ag.act_admin {
         this.characters = characters;
         for (const j in characters) {
             for (const n of characters[j].organs.insert_able_organ_list()) {
-                //console.log(n);
                 insertions.push(n);
             }
         }
@@ -184,7 +181,6 @@ class insert_admin extends aa.ag.act_admin {
                 insertions.push(n.object_insert);
             }
         }
-        //console.log(insertions);
         for (const i in characters) {
             //i是被动
             for (const j in characters) {
@@ -196,7 +192,6 @@ class insert_admin extends aa.ag.act_admin {
                         }
                         const ag = new this.act_type();
                         ag.set_default(characters[i], characters[j], m, n);
-                        //console.log(ag)
                         ag.list_organ();
                     }
                 }
@@ -223,6 +218,7 @@ function find_path(
     const paths: Array<insert_path> = [];
     const path: insert_path = new insert_path();
     path.path = [];
+    const MAX_DEPTH:number = 100
 
     function add_path(): void {
         const p: insert_path = new insert_path();
@@ -232,7 +228,7 @@ function find_path(
     } //拷贝，不然只会push一个引用
 
     function dfs(pos: object_insert_point, rest_length: number, pre: object_insert_point): void {
-    
+        
         if (pos.total_aperture <= 0) {
             return;
         } //没开孔，返回
@@ -242,6 +238,9 @@ function find_path(
         if (pos.object_at.total_space.volume <= 0) {
             return;
         } //没开孔，返回
+        if (path.path.length >= MAX_DEPTH){
+            return
+        } //搜索太深，返回
         
 
         const info = new insert_info();
@@ -257,7 +256,6 @@ function find_path(
         //info处理
         const a = new act_insert();
         a.set_default(info, insertion);
-        //console.log(a)
         const a_will = a.will();
         if (a.able() <= 0) {
             return;
@@ -273,6 +271,7 @@ function find_path(
             pos.object_at.used_space.aperture + insertion.occupy.aperture;
         path.will = path.will + a_will;
         path.path.push(a);
+        
         //停止判断和信息记录
 
         if (rest_length == 0) {
@@ -384,17 +383,13 @@ class object_insert {
     }
 
     dilate(): number {
-        //console.log("____")
-        //console.log(this.prototype)
-        //console.log(this)
-        
         const val = this.prototype.get_num("扩张");
         return val;
     }
     add_modifiers(): void {}
     add_point(point: object_insert_point): void {
         this.points.push(point);
-        //this.points = _unique(this.points);
+        this.points = _unique(this.points);
     }
     set_default(master: ca.character, prototype: pa.o.organ | ia.item_part): void {
         //目前，道具还没有开始配置
@@ -444,9 +439,8 @@ class object_insert_point {
         }
         this.toward.push(p);
         p.toward.push(this);
-        //this.toward = _unique(this.toward);
-        //p.toward = _unique(p.toward);
-        //console.log(p.toward);
+        this.toward = _unique(this.toward);
+        p.toward = _unique(p.toward);
     }
 
     set_default(object_at, position, total_aperture): void {
@@ -489,7 +483,6 @@ function load_map(
             }
             if (m[1] in object) {
                 const o = object[m[1]];
-                //console.log(pos)
                 //用o提取对应的结构
                 const p = new object_insert_point();
                 p.set_default(o, Number(m[2]), rd);
@@ -499,14 +492,11 @@ function load_map(
                 //节点添加到器官
             }
         });
-        //console.log(pos)
         for (const p1 of pos) {
             for (const p2 of pos) {
                 p1.link(p2);
-                //console.log(p1)
             }
         }
-        //console.log(pos)
     }
 }
 
@@ -556,7 +546,7 @@ function _unique(list): Array<any> {
     }
     return r;
     */
-    /*
+
     for (let i = 0; i < list.length; i++) {
         for (let j = i + 1; j < list.length; j++) {
             if (list[i] == list[j]) {
@@ -565,6 +555,6 @@ function _unique(list): Array<any> {
                 j--;
             }
         }
-    }*/
+    }
     return list;
 }

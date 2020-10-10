@@ -122,7 +122,6 @@ class character {
             );
         }
         this.organs.set_default(this, data["器官模板"] as string);
-        //console.log(this.organs.insert_able_organ_list())
         if (data["器官"] != null) {
             this.organs.data_default(
                 data["器官"] as Record<

@@ -65,15 +65,15 @@ class organ_admin {
         }
         aa.i.load_map(insert_data["位点连接"], object_inserts);
         //初始化，然后连接
+        /*
         for (const i in this.all_organs) {
             this.all_organs[i].object_insert = object_inserts[i];
         }
+        */
     }
     insert_able_organ_list(): Array<aa.i.object_insert> {
         const list: Array<aa.i.object_insert> = [];
-        //console.log(this.all_organs["外界"].object_insert.points);
         for (const i of this.all_organs["外界"].object_insert.points) {
-            //console.log(i);
             for (const j of i.toward) {
                 list.push(j.object_at);
             }

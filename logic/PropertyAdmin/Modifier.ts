@@ -42,16 +42,12 @@ class modifier_admin {
             }
             return mlt;
         }
-        if (this.modifiers == {}) {
+        if (Object.keys(this.modifiers).length == 0) {
             return val;
         }
         //add_get是在get时提供修正，不影响原值
-        try {
-            const a = (val + g_add(key)) * g_mlt(key);
-            return a;
-        } finally {
-            return val;
-        }
+        const a = (val + g_add(key)) * g_mlt(key);
+        return a;
     }
     add_alt(key: string, val: number): number {
         function a_add(key: string): number {
@@ -73,12 +69,11 @@ class modifier_admin {
             return mlt;
         }
         //add_alt是在add时提供修正，会影响“加上去的值”
-        try {
-            const a = (val + a_add(key)) * a_mlt(key);
-            return a;
-        } finally {
+        if (Object.keys(this.modifiers).length == 0) {
             return val;
         }
+        const a = (val + a_add(key)) * a_mlt(key);
+        return a;
     }
     names(): Array<string> {
         const a: Array<string> = [];
