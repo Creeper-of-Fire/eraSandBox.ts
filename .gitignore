@@ -10,3 +10,5 @@
 /.vscode/
 /engine/
 *.json
+*.yml
+*.csv
