@@ -104,14 +104,16 @@ class character {
             臀围: 0,
             //以后这些数据会变成用函数获取的，方便锯掉腿之类的
         };
+        this.add_val_temp = {};
         for (const i in this.num_data) {
-            this.add_val_temp[i] = this.num_data[i] + 0;
+            this.add_val_temp[i] = 0;
         }
         this.str_data = {
             名字: "",
             种族: "",
         };
         //要展示的数据放在这上面
+        console.log(this);
     }
 
     set_default(id: number, type: string): void {
@@ -230,24 +232,29 @@ class character {
             return 0;
         }
     }
-    alt_num(key: string, val: number) {
-        const add_val = val - this.num_data[key];
-        this._add_num(key, add_val);
-    }
-    private _add_num(key: string, val: number): void {
-        const a = this.modifiers.add_alt(key, val);
-        this.num_data[key] = this.num_data[key] + a;
-    }
     add_temp(key: string, val: number): void {
-        const add_val = val; // - this.add_val_temp[key];
-        this._add_temp(key, add_val);
-    }
-    private _add_temp(key: string, val: number): void {
         const a = this.modifiers.add_alt(key, val);
         this.add_val_temp[key] = this.add_val_temp[key] + a;
     }
     //character的add_num_temp只加自己的
-    settle_num(): void {}
+    settle(): void {
+        this._settle_this();
+        this.organs.settle();
+    }
+    private _settle_this(): void {
+        this.modifiers.time_pass()
+        if ("时间冻结" in this.modifiers.names) {
+            return;
+        }
+        const a = this.num_data;
+        const b = this.add_val_temp;
+        for (const i in a) {
+            if (b[i] == 0) {
+                continue;
+            }
+            a[i] = a[i] + b[i];
+        }
+    }
     //character的settle_num只会总结自己的
     private _speak(): Array<string> {
         return;

@@ -22,6 +22,26 @@ class modifier_admin {
         this.modifiers[name] = new b();
         this.modifiers[name].set_default(name);
     }
+    time_pass(past_time = 1): void {
+        const a = this.modifiers;
+        if ("时间冻结" in a) {
+            a["时间冻结"].time_pass(past_time);
+            if (a["时间冻结"].timer == 0) {
+                delete a["时间冻结"];
+            }
+        }
+        for (const i in a) {
+            const b = a[i];
+            b.time_pass(past_time);
+            if (b.timer == 0) {
+                delete a[i]; //这种删除不知道对不对
+            }
+        }
+    }
+    remove_modifier(name): void {
+        const a = this.modifiers;
+        a[name];
+    }
 
     add_get(key: string, val: number): number {
         if (Object.keys(this.modifiers).length == 0) {
@@ -106,6 +126,7 @@ class modifier {
     get_mlt: Record<string, number>;
     alt_add: Record<string, number>;
     alt_mlt: Record<string, number>;
+    timer: number;
 
     constructor() {
         this.name = "";
@@ -114,8 +135,10 @@ class modifier {
         this.get_mlt = {};
         this.alt_add = {};
         this.alt_mlt = {};
+        this.timer = 0;
+        //为负一则是永久的
     }
-    set_default(name): void {
+    set_default(name, timer = -1): void {
         this.name = name;
         const data = D.fp.load_yaml(D.fp.ModifierDefaultIndex.配置文件(this.constructor.name));
         if (this.name in data) {
@@ -125,6 +148,17 @@ class modifier {
             this.alt_add = data[this.name]["a_add"];
             this.alt_mlt = data[this.name]["a_mlt"];
         }
+    }
+    time_pass(past_time): void {
+        let a = this.timer;
+        if (a == -1) {
+            return;
+        } //为负一则是永久的
+        if (past_time >= a) {
+            a = 0;
+            return;
+        }
+        a = a - past_time;
     }
 
     work(): void {}

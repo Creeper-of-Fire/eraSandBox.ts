@@ -38,6 +38,12 @@ class organ_admin {
             }
         }
     }
+    settle(): void {
+        const a = this.all_organs;
+        for (const i in a) {
+            a[i].settle();
+        }
+    }
 
     push_organ(key: string, val: organ): void {
         this.all_organs[key] = val;
@@ -115,6 +121,7 @@ class organ {
             破坏: 0,
             欲望: 0,
         };
+        this.add_val_temp = {};
         for (const i in this.num_data) {
             this.add_val_temp[i] = this.num_data[i] + 0;
         }
@@ -131,14 +138,13 @@ class organ {
         this.o_admin = o_admin; //传递自己所在的dict
         this._struct_default(struct_data[name]); //进行器官结构的默认配置
     }
-    //为上级结构增加的属性会流到如果存在该属性的下级结构中，如果下级结构没有属性则添加给本身
-    //如果该结构设置了属性，但是下级结构具有此属性，则当作没有该属性
     data_default(
         organ_data: Record<
             string,
             Record<string, string | number | Record<string, Record<string, string | number>>>
         >
     ): void {
+        //为上级结构增加的属性会流到如果存在该属性的下级结构中
         if (organ_data == null) {
             return;
         }
@@ -163,10 +169,14 @@ class organ {
     private _struct_default(struct_data): void {
         //结构树的默认值
         for (const key in struct_data) {
-            const og = new organ(); //创建下属organ
+            const og = new organ();
+            //创建下属organ
             og.set_default(key, this.o_admin, struct_data);
+            //初始化下级organ
             this.o_admin.push_organ(key, og);
             //向admin添加
+            this.low_list.push(og);
+            //向自己的下级添加
         }
     }
 
@@ -180,17 +190,16 @@ class organ {
             return null;
         }
     }
-    /*
-    alt(key: string, val: string | number) {
+    set(key: string, val: unknown) {
+        //只有设置时才使用
         if (key in this.num_data) {
-            this.alt_num(key, val as number);
+            this.num_data[key] = Number(val);
         } else if (key in this.str_data) {
-            this.alt_str(key, val as string);
+            this.str_data[key] = String(val);
         } else {
-            null;
+            return;
         }
     }
-    */
 
     //字符串处理
     get_str(key: string): string {
@@ -200,7 +209,7 @@ class organ {
             return "";
         }
     }
-    alt_str(key: string, val: string) {
+    set_str(key: string, val: string) {
         this.str_data[key] = val;
     }
 
@@ -223,8 +232,8 @@ class organ {
         }
     }
     get_num(key: string): number {
-        this._sum_num(key);
         if (key in this.num_data) {
+            this._sum_num(key);
             const g = this.modifiers.add_get(key, this.num_data[key]);
             return g;
         } else {
@@ -236,34 +245,38 @@ class organ {
         const a = this.modifiers.add_alt(key, val); //获得加成
         this.add_val_temp[key] = this.add_val_temp[key] + a;
     }
-    settle_num(key: string): void {
+    settle(): void {
+        this.modifiers.time_pass()
+        if ("时间冻结" in this.modifiers.names) {
+            return;
+        }
+        for (const i in this.num_data) {
+            this._settle_key(i);
+        }
+    }
+    private _settle_key(key: string): void {
+        const b = this.add_val_temp;
+        if (b[key] == 0) {
+            return;
+        }
+        const a = this.num_data;
+        a[key] = a[key] + b[key];
         this._sum_num(key);
         const add_val = this.add_val_temp[key];
         this._add_num(key, add_val);
     }
     private _add_num(key: string, val: number): void {
-        const a = this.modifiers.add_alt(key, val); //获得加成
-        let part = 0;
-        for (const i_part of this.low_list) {
-            //获得下级个数
-            if (key in i_part.num_data) {
-                part = part + 1;
-            }
-        }
+        const part = this.low_list.length;
         if (part == 0) {
-            this.num_data[key] = this.num_data[key] + a;
+            this.num_data[key] = this.num_data[key] + val;
         } else {
             for (const i_part of this.low_list) {
-                const add_val = a / part; //未经过加权，直接分配
+                const add_val = val / part; //未经过加权，直接分配
                 i_part._add_num(key, add_val);
             }
         }
     }
 
-    /*
-    add_point(position: number, total_aperture: number): void {
-        this.object_insert.add_point(position, total_aperture);
-    }*/
     destruction(): number {
         //破坏度，最大100，会查找自己的下级器官，得到破坏度上限
         let part = 0;

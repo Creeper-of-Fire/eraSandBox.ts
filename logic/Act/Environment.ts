@@ -13,12 +13,6 @@ class environment {
         this.characters = {};
         this.items = [];
     }
-    set_default(): void {
-        this.check_acts();
-    }
-    check_acts(): void {
-        
-    }
     add_chara(character: C.ca.character): void {
         if (!(String(character.id) in this.characters)) {
             this.characters[String(character.id)] = character;
@@ -28,22 +22,33 @@ class environment {
     add_item(item: I.ia.item): void {
         this.items.push(item);
     }
-    prepare(): void {}
-    回合开始
-    回合结束
+    turn_prepare(command): void {
+        this._check_acts();
+    }
+    turn_start(): void {
+        //执行瞬间动作，挂载长期动作
+        this.trun_process();
+    }
+    trun_process(): void {
+        //长期动作运行
+    }
+    trun_end(): void {
+        //所有时间不停止的角色和器官不进行数据结算
+    }
     work(): void {
         for (const i of this.acts) {
             i.work();
         }
     }
+    protected _check_acts(): void {}
 }
 
 class site extends environment {
     constructor() {
-        super()
+        super();
     }
 
-    check_acts(): void {
+    protected _check_acts(): void {
         const insert = new A.i.insert_admin();
         insert.set_default(this.characters, this.items);
         this.acts.push(insert);
@@ -52,8 +57,8 @@ class site extends environment {
 }
 
 class map extends environment {
-    sites:Array<site>
+    sites: Array<site>;
     constructor() {
-        super()
+        super();
     }
 }
