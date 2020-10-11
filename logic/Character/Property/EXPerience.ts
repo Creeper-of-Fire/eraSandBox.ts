@@ -4,7 +4,7 @@ export { experience_admin };
 
 class experience_admin {
     data_list: Record<string, unknown>;
-    experiences: Record<string, experience>;
+    protected experiences: Record<string, experience>;
     constructor() {
         this.data_list = {};
         this.experiences = {};

@@ -8,7 +8,6 @@ class organ_admin {
     model: string; //角色的器官模板，比如human
     private all_organs: Record<string, organ>;
     master: C.ca.character;
-
     constructor() {
         this.model = "human";
         this.all_organs = {};
@@ -91,9 +90,9 @@ class organ_admin {
 class organ {
     name: string;
     private num_data: Record<string, number>;
+    private add_val_temp: Record<string, number>;
     private str_data: Record<string, string>;
     //直接显示给玩家的数据
-
     private o_admin: organ_admin;
     //本质上，一个角色的所有的organ都是存储在一个一层的dict里面的，以方便外部直接调用彼此
     modifiers: C.m.modifier_admin;
@@ -116,6 +115,10 @@ class organ {
             破坏: 0,
             欲望: 0,
         };
+        for (const i in this.num_data) {
+            this.add_val_temp[i] = this.num_data[i] + 0;
+        }
+        this.str_data = {};
         //初始化相关的数据，即使在战斗中它们也会起作用
         this.o_admin = new organ_admin();
         this.modifiers = new C.m.modifier_admin();
@@ -177,6 +180,7 @@ class organ {
             return null;
         }
     }
+    /*
     alt(key: string, val: string | number) {
         if (key in this.num_data) {
             this.alt_num(key, val as number);
@@ -186,6 +190,7 @@ class organ {
             null;
         }
     }
+    */
 
     //字符串处理
     get_str(key: string): string {
@@ -207,11 +212,14 @@ class organ {
     }
     private _sum_num(key: string): void {
         //汇总
-        for (const i_low of this.low_list) {
-            i_low._sum_num(key);
-        }
-        for (const i_low of this.low_list) {
-            this.num_data[key] = this.num_data[key] + i_low.get_num(key);
+        if (this.low_list.length != 0) {
+            for (const i_low of this.low_list) {
+                i_low._sum_num(key);
+            }
+            for (const i_low of this.low_list) {
+                this.num_data[key] = this.num_data[key] + i_low.get_num(key);
+                //不经过modifier加成地加，但是get_num还是被加成了
+            }
         }
     }
     get_num(key: string): number {
@@ -223,13 +231,17 @@ class organ {
             return 0;
         }
     }
-    alt_num(key: string, val: number): void {
+    add_num_temp(key: string, val: number): void {
+        //this._sum_num(key);
+        const a = this.modifiers.add_alt(key, val); //获得加成
+        this.add_val_temp[key] = this.add_val_temp[key] + a;
+    }
+    settle_num(key: string): void {
         this._sum_num(key);
-        const add_val = val - this.num_data[key];
+        const add_val = this.add_val_temp[key];
         this._add_num(key, add_val);
     }
     private _add_num(key: string, val: number): void {
-        this._sum_num(key);
         const a = this.modifiers.add_alt(key, val); //获得加成
         let part = 0;
         for (const i_part of this.low_list) {
@@ -246,7 +258,7 @@ class organ {
                 i_part._add_num(key, add_val);
             }
         }
-    } //尚未完工
+    }
 
     /*
     add_point(position: number, total_aperture: number): void {

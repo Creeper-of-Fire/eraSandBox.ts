@@ -4,104 +4,74 @@ import A = require("../__init__");
 import era = require("../../../engine/era");
 import D = require("../../Data/__init__");
 
-export { act_insert, insert, object_insert_point, object_insert, insert_admin, load_map };
+export { insert_admin, insert_act, insert_group, object_insert_point, object_insert, load_map };
 
-class act_insert extends A.a.act {
-    p_o: object_insert;
-    info: insert_info;
-    insertion: object_insert;
-    //end_point: object_insert_point;
-    start_point: object_insert_point;
+class insert_admin extends A.a.act_admin {
+    protected acts: Array<A.a.act_group>;
+    protected act_type: typeof insert_group;
+    protected characters: Record<string, C.ca.character>;
     constructor() {
         super();
-        this.p_o = new object_insert();
-        this.info = new insert_info();
-        this.insertion = new object_insert();
-
-        this.start_point = new object_insert_point();
+        this.acts = [];
+        this.characters = {};
     }
-    will(): number {
-        return (
-            passive_will_check(this.p_c, this.a_c, this.info, this.insertion) +
-            active_will_check(this.p_c, this.a_c, this.info, this.insertion)
-        );
-    }
-    able(): number {
-        return 1;
-    }
-    set_feature(): void {}
-
-    dilate_organ(): void {
-        //扩张
-    }
-    work(): void {
-        this.dilate_organ();
-        for (const i in this.spek()) {
-            era.t(i);
+    set_default(characters: Record<string, C.ca.character>, items: Array<I.ia.item>) {
+        const insertions: Array<object_insert> = [];
+        this.act_type = insert_group;
+        this.characters = characters;
+        for (const j in characters) {
+            for (const n of characters[j].organs.insert_able_organ_list()) {
+                insertions.push(n);
+            }
+        }
+        for (const j of items) {
+            for (const n of j.parts) {
+                insertions.push(n.object_insert);
+            }
+        }
+        for (const i in characters) {
+            //i是被动
+            for (const j in characters) {
+                //j是主动
+                for (const m of characters[i].organs.insert_able_point_list()) {
+                    for (const n of insertions) {
+                        if (m.object_at == n) {
+                            continue;
+                        }
+                        const ag = new this.act_type();
+                        ag.set_default(characters[i], characters[j], m, n);
+                        ag.list_organ();
+                    }
+                }
+            }
         }
     }
-
-    //查看扩张值，如果扩张值过小则添加“疼痛值”和“损伤值”，并激活扩张效果
-
-    set_default(insert_info: insert_info, insertion: object_insert): void {
-        this.name = "插入";
-        this.describe = "test2";
-        this.insertion = insertion;
-        this.info = insert_info;
-        this.start_point = insert_info.start_point;
-        this.p_c = insert_info.start_point.object_at.master;
-        this.p_o = insert_info.start_point.object_at;
-        this.a_c = insertion.master;
+    work(): void {
+        for (const i of this.acts) {
+            i.work();
+        }
     }
 }
 
-function passive_will_check(p_c, a_c, info, insertion): number {
-    if ("抖M" in p_c.modifiers) {
-        return 1;
-    } else if (
-        info.start_point.dilate() * info.start_point.total_aperture <=
-        insertion.occupy.aperture
-    ) {
-        return 1;
-    } else {
-        return 1;
-    }
-    return 0;
-}
-
-function active_will_check(p_c, a_c, info, insertion): number {
-    if ("抖M" in p_c.modifiers) {
-        return 1;
-    } else if (
-        info.start_point.dilate() * info.start_point.total_aperture <=
-        insertion.occupy.aperture
-    ) {
-        return 1;
-    } else {
-        return 0;
-    }
-    return;
-}
-
-class insert extends A.a.act_group {
-    name: string;
-    describe: string;
-    act_list: Array<act_insert>;
-    active_character: C.ca.character;
-    passive_character: C.ca.character;
-    entrance: object_insert_point;
-    insertion: object_insert;
+class insert_group extends A.a.act_group {
+    readonly name: string;
+    readonly describe: string;
+    protected active_character: C.ca.character;
+    protected passive_character: C.ca.character;
+    protected act_list: Array<insert_act>;
+    private entrance: object_insert_point;
+    private insertion: object_insert;
     constructor() {
         super();
         this.name = "插入";
         this.describe = "进行插入";
-        this.act_list = [];
-        this.active_character = new C.ca.character();
-        this.passive_character = new C.ca.character();
+        //this.act_list = [];
+        //this.active_character = new C.ca.character();
+        //this.passive_character = new C.ca.character();
         this.entrance = new object_insert_point();
         this.insertion = new object_insert();
     }
-    list_organ(): Array<act_insert> {
+    list_organ(): Array<insert_act> {
         const outside = this.passive_character.organs.get_organ("外界").object_insert;
         let a_g_able = [];
         a_g_able = find_path(
@@ -162,50 +132,80 @@ class insert extends A.a.act_group {
     }
 }
 
-class insert_admin extends A.a.act_admin {
-    acts: Array<A.a.act_group>;
-    act_type: typeof insert;
-    characters: Record<string, C.ca.character>;
-    set_default(characters: Record<string, C.ca.character>, items: Array<I.ia.item>) {
-        const insertions: Array<object_insert> = [];
-        this.act_type = insert;
-        this.characters = characters;
-        for (const j in characters) {
-            for (const n of characters[j].organs.insert_able_organ_list()) {
-                insertions.push(n);
-            }
-        }
-        for (const j of items) {
-            for (const n of j.parts) {
-                insertions.push(n.object_insert);
-            }
-        }
-        for (const i in characters) {
-            //i是被动
-            for (const j in characters) {
-                //j是主动
-                for (const m of characters[i].organs.insert_able_point_list()) {
-                    for (const n of insertions) {
-                        if (m.object_at == n) {
-                            continue;
-                        }
-                        const ag = new this.act_type();
-                        ag.set_default(characters[i], characters[j], m, n);
-                        ag.list_organ();
-                    }
-                }
-            }
-        }
-    }
-    work(): void {
-        for (const i of this.acts) {
-            i.work();
-        }
-    }
+class insert_act extends A.a.act {
+    protected passive_object: object_insert;
+    protected info: insert_info;
+    insertion: object_insert;
+    start_point: object_insert_point;
     constructor() {
         super();
-        this.acts = [];
+        this.passive_object = new object_insert();
+        this.info = new insert_info();
+        this.insertion = new object_insert();
+
+        this.start_point = new object_insert_point();
     }
+    will(): number {
+        return (
+            passive_will_check(this.passive_character, this.active_character, this.info, this.insertion) +
+            active_will_check(this.passive_character, this.active_character, this.info, this.insertion)
+        );
+    }
+    able(): number {
+        return 1;
+    }
+    set_feature(): void {}
+
+    dilate_organ(): void {
+        //扩张
+    }
+    work(): void {
+        this.dilate_organ();
+        for (const i in this.spek()) {
+            era.t(i);
+        }
+    }
+
+    //查看扩张值，如果扩张值过小则添加“疼痛值”和“损伤值”，并激活扩张效果
+
+    set_default(insert_info: insert_info, insertion: object_insert): void {
+        this.name = "插入";
+        this.describe = "test2";
+        this.insertion = insertion;
+        this.info = insert_info;
+        this.start_point = insert_info.start_point;
+        this.passive_character = insert_info.start_point.object_at.master;
+        this.passive_object = insert_info.start_point.object_at;
+        this.active_character = insertion.master;
+    }
+}
+
+function passive_will_check(p_c, a_c, info, insertion): number {
+    if ("抖M" in p_c.modifiers) {
+        return 1;
+    } else if (
+        info.start_point.dilate() * info.start_point.total_aperture <=
+        insertion.occupy.aperture
+    ) {
+        return 1;
+    } else {
+        return 1;
+    }
+    return 0;
+}
+
+function active_will_check(p_c, a_c, info, insertion): number {
+    if ("抖M" in p_c.modifiers) {
+        return 1;
+    } else if (
+        info.start_point.dilate() * info.start_point.total_aperture <=
+        insertion.occupy.aperture
+    ) {
+        return 1;
+    } else {
+        return 0;
+    }
+    return;
 }
 
 function find_path(
@@ -251,7 +251,7 @@ function find_path(
             info.percentage_through = 0;
         }
         //info处理
-        const a = new act_insert();
+        const a = new insert_act();
         a.set_default(info, insertion);
         const a_will = a.will();
         if (a.able() <= 0) {
@@ -304,7 +304,7 @@ function find_path(
                 b.start_point = pos;
                 b.percentage_through = extra;
                 b.object_through = pos.object_at;
-                const c = new act_insert();
+                const c = new insert_act();
                 c.set_default(b, insertion);
                 path.path.push(c);
                 add_path();
@@ -334,7 +334,7 @@ function find_path(
 }
 
 class insert_path {
-    path: Array<act_insert>;
+    path: Array<insert_act>;
     will: number;
     constructor() {
         this.path = [];
@@ -362,7 +362,7 @@ class object_insert {
     //属于自己的修正，和prototype共通
     master: C.ca.character;
     //无主的物体默认丢给NULL角色
-    prototype: C.o.organ | I.ia.item_part;
+    private prototype: C.o.organ | I.ia.item_part;
     //来自于哪里
     total_space: space;
     used_space: space;
@@ -417,6 +417,40 @@ class object_insert {
                     );
                 }
             }
+        }
+    }
+}
+class space {
+    surface: number;
+    volume: number;
+    length: number;
+    aperture: number;
+    //表面系统：一根针占用的表面是1，surface，和道具有关
+    //容积系统：一毫升占用的容积是1，volume，和液体等有关
+    //长度系统：一厘米，length
+    constructor() {
+        this.surface = 0;
+        this.volume = 0;
+        this.length = 0;
+        this.aperture = 0;
+    }
+    set(key: string, val: number) {
+        switch (key) {
+            case "surface":
+                this.surface = val;
+                break;
+            case "volume":
+                this.volume = val;
+                break;
+            case "length":
+                this.length = val;
+                break;
+            case "aperture":
+                this.aperture = val;
+                break;
+
+            default:
+                break;
         }
     }
 }
@@ -499,41 +533,6 @@ function load_map(
             for (const p2 of pos) {
                 p1.link(p2);
             }
-        }
-    }
-}
-
-class space {
-    surface: number;
-    volume: number;
-    length: number;
-    aperture: number;
-    //表面系统：一根针占用的表面是1，surface，和道具有关
-    //容积系统：一毫升占用的容积是1，volume，和液体等有关
-    //长度系统：一厘米，length
-    constructor() {
-        this.surface = 0;
-        this.volume = 0;
-        this.length = 0;
-        this.aperture = 0;
-    }
-    set(key: string, val: number) {
-        switch (key) {
-            case "surface":
-                this.surface = val;
-                break;
-            case "volume":
-                this.volume = val;
-                break;
-            case "length":
-                this.length = val;
-                break;
-            case "aperture":
-                this.aperture = val;
-                break;
-
-            default:
-                break;
         }
     }
 }

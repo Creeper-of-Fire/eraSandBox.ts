@@ -21,8 +21,8 @@ class item_part {
     name: string;
     modifiers: C.m.modifier_admin;
     object_insert: A.i.object_insert;
-    num_data: Record<string, number>;
-    str_data: Record<string, string>;
+    private num_data: Record<string, number>;
+    private str_data: Record<string, string>;
     constructor() {
         this.name = "";
         this.modifiers = new C.m.modifier_admin();

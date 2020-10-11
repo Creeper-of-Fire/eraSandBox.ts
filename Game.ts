@@ -1,9 +1,9 @@
 import era = require("./engine/era");
-import ca = require("./logic/CharacterAdmin");
-import a = require("./logic/ActAdmin/__init__");
+import C = require("./logic/Character/__init__");
+import A = require("./logic/Act/__init__");
 
 class page_admin {
-    pages: Function[];
+    private pages: Function[];
     constructor() {
         this.pages = [];
     }
@@ -140,7 +140,7 @@ function ui_start_new_game_set() {
 
 function ui_make_chara(ctype = "玩家") {
     function set_temp(keyvalue) {
-        temp.alt(keyname, keyvalue);
+        temp.set(keyname, keyvalue);
     }
     function make_input(k_str: string) {
         keyname = k_str;
@@ -255,7 +255,7 @@ function ui_make_love() {
     }
     const c = datas.characters;
     era.page();
-    const train = new a.e.site();
+    const train = new A.e.site();
 
     for (const i of [c.player, c.target, c.assist]) {
         if (i.id != 0) {

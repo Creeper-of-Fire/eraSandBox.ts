@@ -1,6 +1,6 @@
 import C = require("../__init__");
 
-export { equipment, equipment_admin };
+export { equipment_admin };
 
 class equipment_admin {
     constructor() {}

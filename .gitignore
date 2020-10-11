@@ -8,3 +8,5 @@
 *.js
 !run.bat
 /.vscode/
+/engine/
+*.json

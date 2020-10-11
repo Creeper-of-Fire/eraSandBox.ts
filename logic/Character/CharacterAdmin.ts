@@ -75,19 +75,20 @@ class character {
     type: string; //角色的类型，比如“玩家”
     modifiers: C.m.modifier_admin;
     organs: C.o.organ_admin;
-    equipments: C.e.equipment_admin;
+    equipments: C.em.equipment_admin;
     experiences: C.exp.experience_admin;
-    site: A.e.site;
-    num_data: Record<string, number>;
-    str_data: Record<string, string>;
+    environment: A.e.environment;
+    private num_data: Record<string, number>;
+    private add_val_temp: Record<string, number>;
+    private str_data: Record<string, string>;
     constructor() {
         this.id = 0;
         this.type = "NULL";
         this.modifiers = new C.m.modifier_admin();
         this.organs = new C.o.organ_admin();
-        this.equipments = new C.e.equipment_admin();
+        this.equipments = new C.em.equipment_admin();
         this.experiences = new C.exp.experience_admin();
-        this.site = new A.e.site();
+        this.environment = new A.e.environment();
         this.num_data = {
             最大体力: 0,
             体力: 0,
@@ -103,6 +104,9 @@ class character {
             臀围: 0,
             //以后这些数据会变成用函数获取的，方便锯掉腿之类的
         };
+        for (const i in this.num_data) {
+            this.add_val_temp[i] = this.num_data[i] + 0;
+        }
         this.str_data = {
             名字: "",
             种族: "",
@@ -184,8 +188,8 @@ class character {
         }
     }
 
-    //希望少用
     get(key: string): string | number | null {
+        //希望少用
         if (key in this.num_data) {
             return this.get_num(key);
         } else if (key in this.str_data) {
@@ -194,11 +198,12 @@ class character {
             return null;
         }
     }
-    alt(key: string, val: unknown) {
+    set(key: string, val: unknown) {
+        //只有设置时才使用
         if (key in this.num_data) {
-            this.alt_num(key, Number(val));
+            this.num_data[key] = Number(val);
         } else if (key in this.str_data) {
-            this.alt_str(key, String(val));
+            this.str_data[key] = String(val);
         } else {
             return;
         }
@@ -212,7 +217,7 @@ class character {
             return "";
         }
     }
-    alt_str(key: string, val: string) {
+    set_str(key: string, val: string) {
         this.str_data[key] = val;
     }
 
@@ -225,12 +230,26 @@ class character {
             return 0;
         }
     }
-    alt_num(key: string, val: number): void {
+    alt_num(key: string, val: number) {
         const add_val = val - this.num_data[key];
         this._add_num(key, add_val);
     }
     private _add_num(key: string, val: number): void {
         const a = this.modifiers.add_alt(key, val);
         this.num_data[key] = this.num_data[key] + a;
+    }
+    add_temp(key: string, val: number): void {
+        const add_val = val; // - this.add_val_temp[key];
+        this._add_temp(key, add_val);
+    }
+    private _add_temp(key: string, val: number): void {
+        const a = this.modifiers.add_alt(key, val);
+        this.add_val_temp[key] = this.add_val_temp[key] + a;
+    }
+    //character的add_num_temp只加自己的
+    settle_num(): void {}
+    //character的settle_num只会总结自己的
+    private _speak(): Array<string> {
+        return;
     }
 }

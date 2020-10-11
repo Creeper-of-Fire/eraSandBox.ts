@@ -1,9 +1,12 @@
+import D = require("./__init__");
+
 export {
     getRandomInt,
     getRandomNumber,
     getRandomFromArray,
     processLoadData,
     popDuplicateFromArray,
+    translateString,
 };
 
 function getRandomInt(min: number, max: number): number {
@@ -61,4 +64,20 @@ function popDuplicateFromArray(list): Array<any> {
         }
     }
     return list;
+}
+function translateString(speak: string): string {
+    const t_data = D.fp.load_yaml(D.fp.ActDefaultIndex.描述()) as Record<
+        string,
+        string | Array<string>
+    >;
+    if (speak in t_data) {
+        const a = t_data[speak];
+        if (typeof a == "string") {
+            return a;
+        } else {
+            return getRandomFromArray(a);
+        }
+    }
+    //功能暂时不做
+    return speak;
 }
