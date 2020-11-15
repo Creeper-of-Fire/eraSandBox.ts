@@ -34,11 +34,78 @@ namespace pages {
     export function show_save_to_save() {}
 }
 class data_admin {
-    characters: C.ca.character_admin;
+    characters: character_admin;
     constructor() {
-        this.characters = new C.ca.character_admin();
+        this.characters = new character_admin();
     }
 }
+
+ 
+class character_admin {
+    charalist: Array<C.ca.character>;
+    master: C.ca.character;
+    assist: C.ca.character;
+    target: C.ca.character;
+    player: C.ca.character;
+    choose: C.ca.character;
+    constructor() {
+        this.charalist = [];
+        const null_chara = new C.ca.character();
+        null_chara.set_default(0, "NULL");
+        this.charalist.push(null_chara);
+        //添加空角色
+        this.master = this.charalist[0];
+        this.assist = this.charalist[0];
+        this.target = this.charalist[0];
+        this.player = this.charalist[0];
+        this.choose = this.charalist[0];
+    }
+    num(): number {
+        //注意，去掉了一个空角色
+        const num = this.charalist.length - 1;
+        return num;
+    }
+
+    add_chara(temp_chara: C.ca.character): void {
+        temp_chara.id = this.charalist.length;
+        this.charalist.push(temp_chara);
+        this._re_list();
+        this.error_fix();
+    }
+    del_chara(id: number): void {
+        this.charalist.splice(id, 1);
+        this._re_list();
+    }
+    get_chara(): Array<string> {
+        return;
+    }
+    private _re_list(): void {
+        for (let i = 0; i <= this.num(); i++) {
+            this.charalist[i].id = i;
+        }
+    }
+    error_fix(): void {
+        if (this.num() != 0) {
+            if (this.master.id == 0) {
+                this.master = this.charalist[1];
+            }
+            if (this.target.id == 0) {
+                this.target = this.charalist[1];
+            }
+            if (this.player.id == 0) {
+                this.player = this.charalist[1];
+            }
+        }
+    }
+    names(start: number, end: number = this.charalist.length - 1): Array<string> {
+        const a: Array<string> = [];
+        for (let i = start; i <= end; i++) {
+            a.push(this.charalist[i].get_str("名字"));
+        }
+        return a;
+    }
+}//以后会移除
+
 
 const version = "Beta 0.0.2";
 const pages_admin = new page_admin();
@@ -132,7 +199,7 @@ function ui_start_old_game() {
 function ui_start_new_game_set() {
     era.page();
     function start_new_game() {
-        datas.characters = new C.ca.character_admin();
+        datas.characters = new character_admin();
         ui_make_chara("玩家");
     }
     era.b("梦境的开端", start_new_game, { popup: "进行玩家属性设置" });
@@ -162,7 +229,7 @@ function ui_make_chara(ctype = "玩家") {
 
     let keyname = "";
     const temp = new C.ca.character();
-    temp.set_default(1,ctype);
+    temp.set_default(1, ctype);
     pages.goto(ui_make_chara_1);
 }
 
@@ -185,26 +252,9 @@ function ui_main() {
         era.b("返回", pages.back);
     }
     function load_goto() {
-        datas["chara"] = new C.ca.character_admin();
+        datas["chara"] = new character_admin();
         datas["chara"].load();
         pages.goto(ui_main);
-    }
-    function main_make_chara() {
-        function make_choose(t) {
-            choose = t;
-        }
-        function go_next() {
-            if (choose != "") {
-                pages.goto(ui_make_chara, choose);
-            }
-        }
-        let choose = "";
-        era.page();
-        era.h("角色召唤");
-        const clist = c.get_chara();
-        era.dropdown(clist, make_choose);
-        era.b("确定", go_next);
-        era.b("返回", pages.back);
     }
     function target_info(id): string {
         const info = "[" + String(id) + "]" + String(c.charalist[id].get("名字"));
@@ -227,11 +277,11 @@ function ui_main() {
     era.t("助手" + c.assist.get("名字"));
     era.t();
     era.t("目标" + c.target.get("名字"));
+    //era.t();
+    //era.t("查看角色：");
+    //era.dropdown(charalist_infos(), target_choose, target_info(c.target.id));
     era.t();
-    era.t("查看角色：");
-    era.dropdown(charalist_infos(), target_choose, target_info(c.target.id));
-    era.t();
-    era.b("召唤角色", pages.goto, main_make_chara);
+    era.b("召唤角色", pages.goto, ui_make_chara);
     if (c.target.id == 1) {
         era.b("自慰", pages.goto, ui_make_love);
     } else {
@@ -243,25 +293,27 @@ function ui_main() {
 }
 
 function ui_make_love() {
-    function ui_make_love_main() {
+    function turn_running() {
         era.page();
-        era.b("下一回合", pages.goto, act);
+        train.turn_start();
+        train.trun_process();
+        train.trun_end();
+        pages.goto(turn_prepare);
+    }
+    function turn_prepare() {
+        era.page();
+        train.turn_prepare();
+        era.b("下一回合", pages.goto, turn_running);
         era.b("结束", pages.goto, ui_main);
-    }
-    function act() {
-        era.page();
-        train.work();
-        pages.goto(ui_make_love_main);
-    }
+    } 
     const c = datas.characters;
     era.page();
     const train = new A.e.site();
 
-    for (const i of [c.player, c.target, c.assist]) {
-        if (i.id != 0) {
-            train.add_chara(i);
+    for (const i in datas.characters) {
+        if (datas.characters[i].id != 0) {
+            train.add_chara(datas.characters[i]);
         }
     }
-    train.set_default();
-    era.b("开始", pages.goto, ui_make_love_main);
+    era.b("开始", pages.goto, turn_prepare);
 }

@@ -1,14 +1,11 @@
-/erajs/
 /save/
 /.vs/
 /node_modules/
-*.bat
-*.pyc
-*.log
-*.js
-!run.bat
 /.vscode/
 /engine/
+*.bat
+*.js
 *.json
 *.yml
 *.csv
+!run.bat

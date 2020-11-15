@@ -6,45 +6,13 @@ import D = require("../../Data/__init__");
 
 export { insert_admin, insert_act, insert_group, object_insert_point, object_insert, load_map };
 
-class insert_admin extends A.a.act_admin {
-    protected acts: Array<A.a.act_group>;
+class insert_admin extends A.aa.act_admin {
+    protected acts: Array<A.ag.act_group>;
     protected act_type: typeof insert_group;
     protected characters: Record<string, C.ca.character>;
     constructor() {
         super();
-        this.acts = [];
-        this.characters = {};
-    }
-    set_default(characters: Record<string, C.ca.character>, items: Array<I.ia.item>) {
-        const insertions: Array<object_insert> = [];
         this.act_type = insert_group;
-        this.characters = characters;
-        for (const j in characters) {
-            for (const n of characters[j].organs.insert_able_organ_list()) {
-                insertions.push(n);
-            }
-        }
-        for (const j of items) {
-            for (const n of j.parts) {
-                insertions.push(n.object_insert);
-            }
-        }
-        for (const i in characters) {
-            //i是被动
-            for (const j in characters) {
-                //j是主动
-                for (const m of characters[i].organs.insert_able_point_list()) {
-                    for (const n of insertions) {
-                        if (m.object_at == n) {
-                            continue;
-                        }
-                        const ag = new this.act_type();
-                        ag.set_default(characters[i], characters[j], m, n);
-                        ag.list_organ();
-                    }
-                }
-            }
-        }
     }
     work(): void {
         for (const i of this.acts) {
@@ -53,7 +21,7 @@ class insert_admin extends A.a.act_admin {
     }
 }
 
-class insert_group extends A.a.act_group {
+class insert_group extends A.ag.act_group {
     readonly name: string;
     readonly describe: string;
     protected active_character: C.ca.character;
@@ -65,9 +33,6 @@ class insert_group extends A.a.act_group {
         super();
         this.name = "插入";
         this.describe = "进行插入";
-        //this.act_list = [];
-        //this.active_character = new C.ca.character();
-        //this.passive_character = new C.ca.character();
         this.entrance = new object_insert_point();
         this.insertion = new object_insert();
     }
@@ -90,7 +55,23 @@ class insert_group extends A.a.act_group {
             return null;
         }
     }
-    set_default(
+    set_default(passive_character: C.ca.character, active_character: C.ca.character) {
+        const insertions: Array<object_insert> = [];
+        for (const n of active_character.insert_able_object_list()) {
+            insertions.push(n);
+        }
+        //console.log(insertions)
+        for (const m of passive_character.insert_able_point_list()) {
+            for (const n of insertions) {
+                if (m.object_at == n) {
+                    continue;
+                }
+                this._set_default(passive_character, active_character, m, n);
+                this.list_organ();
+            }
+        }
+    }
+    _set_default(
         passive_character: C.ca.character,
         active_character: C.ca.character,
         entrance: object_insert_point,
@@ -101,30 +82,6 @@ class insert_group extends A.a.act_group {
         this.passive_character = passive_character;
         this.insertion = insertion;
         this.entrance = entrance;
-    }
-    able(): number {
-        for (const i_act of this.act_list) {
-            if (i_act.able() == 0) {
-                return 0;
-            }
-            return 1;
-        }
-    }
-    will(): number {
-        let willing = 0;
-        for (const i_act of this.act_list) {
-            if (i_act.will() == 0) {
-                return 0;
-            } else {
-                willing = willing + i_act.will();
-            }
-        }
-        return willing;
-    }
-    work(): void {
-        for (const i_act of this.act_list) {
-            i_act.work();
-        }
     }
     insert_length_will(): number {
         //插入的深度的精神需求
@@ -142,13 +99,33 @@ class insert_act extends A.a.act {
         this.passive_object = new object_insert();
         this.info = new insert_info();
         this.insertion = new object_insert();
-
         this.start_point = new object_insert_point();
     }
+    set_default(insert_info: insert_info, insertion: object_insert): void {
+        this.name = "插入";
+        this.describe = "test2";
+        this.insertion = insertion;
+        this.info = insert_info;
+        this.start_point = insert_info.start_point;
+        this.passive_character = insert_info.start_point.object_at.master;
+        this.passive_object = insert_info.start_point.object_at;
+        this.active_character = insertion.master;
+    }
+
     will(): number {
         return (
-            passive_will_check(this.passive_character, this.active_character, this.info, this.insertion) +
-            active_will_check(this.passive_character, this.active_character, this.info, this.insertion)
+            passive_will_check(
+                this.passive_character,
+                this.active_character,
+                this.info,
+                this.insertion
+            ) +
+            active_will_check(
+                this.passive_character,
+                this.active_character,
+                this.info,
+                this.insertion
+            )
         );
     }
     able(): number {
@@ -167,17 +144,6 @@ class insert_act extends A.a.act {
     }
 
     //查看扩张值，如果扩张值过小则添加“疼痛值”和“损伤值”，并激活扩张效果
-
-    set_default(insert_info: insert_info, insertion: object_insert): void {
-        this.name = "插入";
-        this.describe = "test2";
-        this.insertion = insertion;
-        this.info = insert_info;
-        this.start_point = insert_info.start_point;
-        this.passive_character = insert_info.start_point.object_at.master;
-        this.passive_object = insert_info.start_point.object_at;
-        this.active_character = insertion.master;
-    }
 }
 
 function passive_will_check(p_c, a_c, info, insertion): number {
@@ -205,7 +171,7 @@ function active_will_check(p_c, a_c, info, insertion): number {
     } else {
         return 0;
     }
-    return;
+    return 0;
 }
 
 function find_path(
@@ -224,6 +190,7 @@ function find_path(
         p.path = path.path.slice(0); //数组浅拷贝
         p.will = path.will;
         paths.push(p);
+        console.log(p);
     } //拷贝，不然只会push一个引用
 
     function dfs(pos: object_insert_point, rest_length: number, pre: object_insert_point): void {
@@ -242,8 +209,8 @@ function find_path(
 
         const info = new insert_info();
         info.start_point = pre;
-        //info.end_point = pos
         info.object_through = pre.object_at;
+        console.log(info);
         if (pos.object_at == pre.object_at) {
             //在同一个结构中穿行时
             info.percentage_through = Math.abs(pos.position - pre.position);
@@ -501,12 +468,6 @@ function load_map(
     data: Record<string, string | number>,
     object: Record<string, object_insert>
 ): void {
-    /*
-    for (const k in object as Record<string, object_insert>) {
-        object[k].points = [];
-        //初始化信息
-    }
-    */ //请自己初始化
     for (const key in data as Record<string, string | number>) {
         const posInfo: Array<string> = key.split(",");
         const pos: Array<object_insert_point> = [];
@@ -514,7 +475,6 @@ function load_map(
         //获取半径
         posInfo.forEach((s) => {
             const m = /^(.*)_(\d+(?:\.\d+)?)$/.exec(s); //魔法代码(通过正则表达式来匹配)
-
             if (!m) {
                 return;
             }
